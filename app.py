@@ -211,12 +211,40 @@ init_state()
 game_active = st.session_state.p1_health is not None
 
 st.markdown("<h1 style='text-align:center;'>💥 Fortnite Battle Simulator</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; opacity:0.6;'>Ayaan vs Omer — may the best player win!</p>", unsafe_allow_html=True)
+
+with st.expander("📖 How to Play"):
+    st.markdown("""
+**Goal:** Reduce your opponent's HP to 0 to win the match.
+
+**Steps:**
+1. **Choose your skin** — each skin has a unique special ability that can turn the tide of battle.
+2. **Choose your weapon** — weapons differ in damage, accuracy, and critical hit chance.
+3. Hit **Start Match** to lock in your choices and begin.
+4. Take turns pressing your **ATTACK** button — watch the battle log for results.
+5. First player to reach 0 HP loses. 🏆
+
+**Skin Abilities:**
+- 🧑 **Jonesy — Lucky Break:** 10% chance to completely dodge an incoming attack
+- 👑 **Midas — Golden Touch:** 20% chance to deal triple damage on any hit
+- 🐻 **Cuddle Team Leader — Bear Hug:** Heals 8 HP after every attack you land
+- ✈️ **Renegade Raider — Aerial Precision:** +20% accuracy on all weapons
+
+**Weapon Guide:**
+- 🔫 **Scar** — Reliable, high accuracy, good all-rounder
+- 🪖 **Pump Shotgun** — Massive damage but lower accuracy, high risk/reward
+- 🚀 **Rocket Launcher** — Highest damage in the game, moderate accuracy
+- ⚡ **Tactical SMG** — Low damage per shot but fires fast with solid accuracy
+
+**Battle Log Colors:** 🟡 Critical/Golden · 🟢 Normal hit · ⚫ Miss · 🔴 Elimination · 🩷 Ability triggered
+""")
+
 st.markdown("---")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("### 🟦 Player 1")
+    st.markdown("### 🟦 Ayaan")
     p1_skin = st.selectbox("Choose Skin", skin_names, key="p1_skin", disabled=game_active)
     p1_weapon = st.selectbox("Choose Weapon", weapon_names, key="p1_weapon", disabled=game_active)
     locked_s1 = st.session_state.p1_locked or p1_skin
@@ -228,7 +256,7 @@ with col1:
     )
 
 with col2:
-    st.markdown("### 🟥 Player 2")
+    st.markdown("### 🟥 Omer")
     p2_skin = st.selectbox("Choose Skin", skin_names, index=1, key="p2_skin", disabled=game_active)
     p2_weapon = st.selectbox("Choose Weapon", weapon_names, index=1, key="p2_weapon", disabled=game_active)
     locked_s2 = st.session_state.p2_locked or p2_skin
@@ -260,7 +288,7 @@ else:
     else:
         a1, a2 = st.columns(2)
         with a1:
-            if st.button("💥 P1 ATTACKS!", use_container_width=True, type="primary"):
+            if st.button("💥 Ayaan ATTACKS!", use_container_width=True, type="primary"):
                 do_attack(
                     st.session_state.p1_locked, st.session_state.p2_locked,
                     st.session_state.p1_wpn_locked,
@@ -268,7 +296,7 @@ else:
                 )
                 st.rerun()
         with a2:
-            if st.button("💥 P2 ATTACKS!", use_container_width=True, type="primary"):
+            if st.button("💥 Omer ATTACKS!", use_container_width=True, type="primary"):
                 do_attack(
                     st.session_state.p2_locked, st.session_state.p1_locked,
                     st.session_state.p2_wpn_locked,
