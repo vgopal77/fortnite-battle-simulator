@@ -1,6 +1,7 @@
 import random
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 from gamedata import SKINS, WEAPONS
 
 st.set_page_config(page_title="Fortnite Battle Simulator", page_icon="💥", layout="wide")
@@ -495,37 +496,80 @@ else:
             reset_match(); st.rerun()
     else:
         turn = st.session_state.current_turn
-        cur_name  = n1 if turn == "p1" else n2
-        cur_skin  = st.session_state.p1_locked if turn == "p1" else st.session_state.p2_locked
-        cur_wpn   = st.session_state.p1_wpn_locked if turn == "p1" else st.session_state.p2_wpn_locked
-        def_name  = n2 if turn == "p1" else n1
-        def_skin  = st.session_state.p2_locked if turn == "p1" else st.session_state.p1_locked
-        def_hp    = "p2_health" if turn == "p1" else "p1_health"
-        def_sh    = "p2_shields" if turn == "p1" else "p1_shields"
-        atk_hp    = "p1_health" if turn == "p1" else "p2_health"
-        atk_sh    = "p1_shields" if turn == "p1" else "p2_shields"
+        p1_active = (turn == "p1")
+        p2_active = (turn == "p2")
+        turn_color = "#4da6ff" if p1_active else "#ff5252"
 
-        turn_color = "#4da6ff" if turn == "p1" else "#ff5252"
+        # Turn indicator banner
+        active_name = n1 if p1_active else n2
         st.markdown(f"""
 <div style="text-align:center;padding:10px 16px;margin-bottom:10px;
-  background:rgba(5,10,40,0.85);border:2px solid {turn_color};border-radius:8px;
-  box-shadow:0 0 20px {turn_color}55;">
-  <div style="font-family:'Bangers',sans-serif;font-size:22px;letter-spacing:4px;
+  background:rgba(5,10,40,0.88);border:2px solid {turn_color};border-radius:8px;
+  box-shadow:0 0 22px {turn_color}55;">
+  <div style="font-family:'Bangers',sans-serif;font-size:24px;letter-spacing:4px;
     color:{turn_color};text-shadow:-1px -1px 0 #000,1px 1px 0 #000;">
-    ⚡ &nbsp; IT'S {cur_name.upper()}'S TURN &nbsp; ⚡
+    ⚡ &nbsp; {active_name.upper()}'S TURN — PRESS YOUR KEY! &nbsp; ⚡
   </div>
-  <div style="font-family:'Rajdhani',sans-serif;font-size:13px;color:#aabbdd;
-    margin-top:2px;letter-spacing:1px;">
-    Pass the device to {cur_name} and press ATTACK
+  <div style="font-family:'Rajdhani',sans-serif;font-size:13px;color:#aabbdd;margin-top:3px;">
+    🟦 {n1} → press &nbsp;<b style="color:#4da6ff;font-size:16px;">A</b>&nbsp; key &nbsp;|&nbsp;
+    🟥 {n2} → press &nbsp;<b style="color:#ff5252;font-size:16px;">L</b>&nbsp; key
   </div>
 </div>""", unsafe_allow_html=True)
 
-        if st.button(f"💥  {cur_name.upper()} — ATTACK!", use_container_width=True, type="primary"):
-            do_attack(cur_name, cur_skin, def_name, def_skin, cur_wpn,
-                      def_hp, def_sh, atk_hp, atk_sh)
-            if not st.session_state.game_over:
-                st.session_state.current_turn = "p2" if turn == "p1" else "p1"
-            st.rerun()
+        # Two attack buttons — only the active player's is enabled
+        a1, a2 = st.columns(2)
+        with a1:
+            if st.button(f"[A] 💥 {n1.upper()} ATTACKS!",
+                         use_container_width=True,
+                         type="primary" if p1_active else "secondary",
+                         disabled=not p1_active,
+                         key="btn_p1_atk"):
+                do_attack(n1, st.session_state.p1_locked,
+                          n2, st.session_state.p2_locked,
+                          st.session_state.p1_wpn_locked,
+                          "p2_health","p2_shields","p1_health","p1_shields")
+                if not st.session_state.game_over:
+                    st.session_state.current_turn = "p2"
+                st.rerun()
+        with a2:
+            if st.button(f"[L] 💥 {n2.upper()} ATTACKS!",
+                         use_container_width=True,
+                         type="primary" if p2_active else "secondary",
+                         disabled=not p2_active,
+                         key="btn_p2_atk"):
+                do_attack(n2, st.session_state.p2_locked,
+                          n1, st.session_state.p1_locked,
+                          st.session_state.p2_wpn_locked,
+                          "p1_health","p1_shields","p2_health","p2_shields")
+                if not st.session_state.game_over:
+                    st.session_state.current_turn = "p1"
+                st.rerun()
+
+        # Keyboard shortcut injection — A key = P1, L key = P2
+        components.html("""
+<!DOCTYPE html><html><body>
+<script>
+(function() {
+  // Remove any previous listener to avoid duplicates on rerun
+  if (window.parent.__fnHandler) {
+    window.parent.document.removeEventListener('keydown', window.parent.__fnHandler);
+  }
+  window.parent.__fnHandler = function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const key = e.key.toLowerCase();
+    if (key !== 'a' && key !== 'l') return;
+    e.preventDefault();
+    const btns = window.parent.document.querySelectorAll('.stButton button');
+    for (let btn of btns) {
+      const txt = (btn.innerText || btn.textContent).trim();
+      if (key === 'a' && txt.includes('[A]') && !btn.disabled) { btn.click(); return; }
+      if (key === 'l' && txt.includes('[L]') && !btn.disabled) { btn.click(); return; }
+    }
+  };
+  window.parent.document.addEventListener('keydown', window.parent.__fnHandler);
+})();
+</script>
+</body></html>""", height=1)
 
 # ── Battle Log ────────────────────────────────────────────────────────────────
 
