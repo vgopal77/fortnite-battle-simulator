@@ -102,6 +102,10 @@ def init_state():
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
+    # clear log if it contains old-format plain strings instead of (type, text) tuples
+    log = st.session_state.battle_log
+    if log and not isinstance(log[0], tuple):
+        st.session_state.battle_log = []
 
 
 def start_match(s1, s2, w1, w2):
