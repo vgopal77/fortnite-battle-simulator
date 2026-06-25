@@ -150,32 +150,62 @@ function drawTree(t){
   for(let i=2;i>=0;i--){cx.fillStyle=cl[i];cx.beginPath();cx.arc(t.x,t.y-t.r*.3-i*t.r*.24,t.r*(.88-i*.1),0,Math.PI*2);cx.fill();}
 }
 function drawCastle(){
-  let bx=W/2,by=H-52,bw=114,bh=76;
-  cx.fillStyle='rgba(0,0,0,0.35)';cx.fillRect(bx-bw/2+8,by-bh+8,bw,bh);
+  let bx=W/2,by=H-38,bw=200,bh=100,tw=52,th=150;
+  // Moat trench
+  cx.fillStyle='rgba(0,0,0,0.55)';cx.fillRect(bx-bw/2-tw+6,by+4,bw+tw*2-12,14);
+  cx.fillStyle='rgba(0,20,40,0.6)';cx.fillRect(bx-bw/2-tw+8,by+5,bw+tw*2-16,10);
+  // Corner towers
+  for(let s of[-1,1]){
+    let tx=bx+s*(bw/2+tw/2);
+    let tgT=cx.createLinearGradient(tx-tw/2,by-th,tx+tw/2,by);
+    tgT.addColorStop(0,'#8a7248');tgT.addColorStop(1,'#3a2810');
+    cx.fillStyle=tgT;cx.fillRect(tx-tw/2,by-th,tw,th);
+    // Stone lines on tower
+    cx.strokeStyle='rgba(0,0,0,0.28)';cx.lineWidth=1;
+    for(let y=by-th+16;y<by;y+=20){cx.beginPath();cx.moveTo(tx-tw/2,y);cx.lineTo(tx+tw/2,y);cx.stroke();}
+    // Tower battlements
+    cx.fillStyle='#9a8258';
+    for(let i=0;i<4;i++){cx.fillRect(tx-tw/2+i*14,by-th-18,10,18);}
+    // Windows (2 per tower)
+    cx.fillStyle='#0d0800';
+    for(let wy of[by-th+30,by-th+75]){cx.fillRect(tx-6,wy,12,18);cx.beginPath();cx.arc(tx,wy,6,Math.PI,0);cx.fill();}
+    // Torch with glow
+    let fl=0.7+0.3*Math.sin(frame*.14+s*3);
+    let trc={x:tx,y:by-th+52};
+    let glw=cx.createRadialGradient(trc.x,trc.y,0,trc.x,trc.y,60);
+    glw.addColorStop(0,`rgba(255,140,0,${fl*0.3})`);glw.addColorStop(1,'rgba(0,0,0,0)');
+    cx.fillStyle=glw;cx.fillRect(trc.x-60,trc.y-60,120,120);
+    cx.fillStyle=`rgba(255,${Math.floor(120+60*Math.sin(frame*.12+s))},0,${fl})`;
+    cx.beginPath();cx.arc(trc.x,trc.y,6,0,Math.PI*2);cx.fill();
+  }
+  // Main wall
   let wg=cx.createLinearGradient(bx-bw/2,by-bh,bx+bw/2,by);
-  wg.addColorStop(0,'#5a4228');wg.addColorStop(1,'#28180a');
+  wg.addColorStop(0,'#7a6238');wg.addColorStop(0.5,'#5a4828');wg.addColorStop(1,'#2a180a');
   cx.fillStyle=wg;cx.fillRect(bx-bw/2,by-bh,bw,bh);
-  cx.strokeStyle='rgba(0,0,0,0.35)';cx.lineWidth=1;
-  for(let y=by-bh+12;y<by;y+=15){cx.beginPath();cx.moveTo(bx-bw/2,y);cx.lineTo(bx+bw/2,y);cx.stroke();}
-  cx.fillStyle='#6a5238';
-  for(let bxx=bx-bw/2;bxx<bx+bw/2-14;bxx+=18)cx.fillRect(bxx,by-bh-14,13,14);
-  cx.fillStyle='#0d0600';cx.fillRect(bx-17,by-42,34,42);
-  cx.beginPath();cx.arc(bx,by-42,17,Math.PI,0);cx.fill();
-  cx.strokeStyle='#3a2508';cx.lineWidth=3;
-  for(let gx=-12;gx<=12;gx+=8){cx.beginPath();cx.moveTo(bx+gx,by-42);cx.lineTo(bx+gx,by);cx.stroke();}
-  let fl=0.7+0.3*Math.sin(frame*.12);
-  cx.fillStyle=`rgba(255,${Math.floor(100+60*Math.sin(frame*.1))},0,${fl})`;
-  cx.beginPath();cx.arc(bx-bw/2+13,by-bh+10,5,0,Math.PI*2);cx.fill();
-  cx.beginPath();cx.arc(bx+bw/2-13,by-bh+10,5,0,Math.PI*2);cx.fill();
-  [bx-bw/2+13,bx+bw/2-13].forEach(tx=>{
-    let tg=cx.createRadialGradient(tx,by-bh+10,0,tx,by-bh+10,45);
-    tg.addColorStop(0,'rgba(255,120,0,0.22)');tg.addColorStop(1,'rgba(0,0,0,0)');
-    cx.fillStyle=tg;cx.fillRect(tx-45,by-bh-20,90,70);
-  });
-  cx.fillStyle='#666';cx.fillRect(bx-1,by-bh-40,2,30);
+  // Brick pattern
+  cx.strokeStyle='rgba(0,0,0,0.28)';cx.lineWidth=1;
+  for(let y=by-bh+16;y<by;y+=20){cx.beginPath();cx.moveTo(bx-bw/2,y);cx.lineTo(bx+bw/2,y);cx.stroke();}
+  for(let row=0;row<6;row++){let off=(row%2)*18;for(let x=bx-bw/2+off;x<bx+bw/2;x+=36){cx.beginPath();cx.moveTo(x,by-bh+row*16);cx.lineTo(x,by-bh+(row+1)*16);cx.stroke();}}
+  // Wall battlements (top)
+  cx.fillStyle='#8a7248';
+  for(let i=0;i<10;i++){cx.fillRect(bx-bw/2+i*21,by-bh-20,15,20);}
+  // Inner keep (taller centre)
+  cx.fillStyle='#6a5238';cx.fillRect(bx-35,by-bh-40,70,40);
+  for(let i=0;i<4;i++){cx.fillStyle='#7a6248';cx.fillRect(bx-35+i*19,by-bh-58,14,18);}
+  // Gate arch
+  cx.fillStyle='#0d0600';cx.fillRect(bx-26,by-60,52,60);
+  cx.beginPath();cx.arc(bx,by-60,26,Math.PI,0);cx.fill();
+  // Portcullis
+  cx.strokeStyle='#4a3010';cx.lineWidth=4;
+  for(let gx=-20;gx<=20;gx+=10){cx.beginPath();cx.moveTo(bx+gx,by-60);cx.lineTo(bx+gx,by);cx.stroke();}
+  cx.lineWidth=2;
+  for(let gy=by-58;gy<by;gy+=14){cx.beginPath();cx.moveTo(bx-20,gy);cx.lineTo(bx+20,gy);cx.stroke();}
+  // Flagpole + flag
+  cx.fillStyle='#999';cx.fillRect(bx-1.5,by-bh-98,3,58);
+  let fw=Math.sin(frame*.07)*6;
   cx.fillStyle='#FFD100';
-  let fw=Math.sin(frame*.06)*3;
-  cx.beginPath();cx.moveTo(bx+1,by-bh-38);cx.lineTo(bx+20+fw,by-bh-30+fw);cx.lineTo(bx+1,by-bh-20);cx.closePath();cx.fill();
+  cx.beginPath();cx.moveTo(bx+1,by-bh-95);cx.lineTo(bx+32+fw,by-bh-80+fw*.4);cx.lineTo(bx+1,by-bh-63);cx.closePath();cx.fill();
+  cx.fillStyle='#1a0a00';cx.font='bold 10px sans-serif';cx.textAlign='center';cx.fillText('👑',bx+14+fw*.3,by-bh-75);cx.textAlign='left';
 }
 function drawSoldier(x,y,facing,team,wk){
   let isRed=(team==='red');
@@ -226,22 +256,23 @@ for(let i=0;i<7;i++)rocks.push({x:60+Math.random()*(W-120),y:90+Math.random()*(H
 __WORLD_JS__
 function spawnWave(n){
   enemies=[];
-  // HARDER DIFFICULTY
-  let z=[5,7,6,9,9][Math.min(n-1,4)];
-  let s=[0,3,5,6,7][Math.min(n-1,4)];
-  let b=[0,0,2,2,4][Math.min(n-1,4)];
+  let z=[5,8,7,11,10,13,16][Math.min(n-1,6)];
+  let s=[0,3,5,7, 9,10,12][Math.min(n-1,6)];
+  let b=[0,0,2,3, 4, 6, 8][Math.min(n-1,6)];
+  let sm=1+n*0.08; // speed multiplier per wave
   let types=[];
   for(let i=0;i<z;i++)types.push('zombie');
   for(let i=0;i<s;i++)types.push('soldier');
   for(let i=0;i<b;i++)types.push('boss');
   types.sort(()=>Math.random()-.5);
   types.forEach((t,i)=>{
-    let mx={zombie:65,soldier:110,boss:260}[t];
-    enemies.push({x:40+Math.random()*(W-80),y:-25-i*35,hp:mx,mhp:mx,
-      dmg:{zombie:28,soldier:48,boss:85}[t],
-      spd:{zombie:1.3,soldier:1.6,boss:1.0}[t],
-      type:t,atk:0,spawn:i*6});
+    let mx={zombie:90,soldier:150,boss:340}[t];
+    enemies.push({x:40+Math.random()*(W-80),y:-25-i*30,hp:mx,mhp:mx,
+      dmg:{zombie:32,soldier:58,boss:100}[t],
+      spd:{zombie:1.3*sm,soldier:1.65*sm,boss:1.0*sm}[t],
+      type:t,atk:0,spawn:i*5});
   });
+  if(n>1){p.sh=Math.min(P_MAX_SH,p.sh+35);}
   waveDone=false;showResult=false;
 }
 function inCover(px,py){
@@ -370,7 +401,7 @@ function drawHUD(){
   let sp=p.sh/P_MAX_SH;cx.fillStyle='rgba(0,0,0,0.55)';cx.fillRect(10,23,145,9);cx.fillStyle='#40c4ff';cx.fillRect(10,23,145*sp,9);
   cx.strokeStyle='rgba(255,255,255,0.2)';cx.strokeRect(10,23,145,9);cx.fillStyle='#40c4ff';cx.font='8px Rajdhani,sans-serif';cx.fillText('🛡️ '+p.sh+'/'+P_MAX_SH,14,30);
   cx.fillStyle='#FFD100';cx.font='bold 15px Bangers,sans-serif';cx.textAlign='center';
-  cx.fillText(PNAME.toUpperCase()+' · WAVE '+wave+' / 5 · ⚠️ HARD MODE',W/2,18);
+  cx.fillText(PNAME.toUpperCase()+' · WAVE '+wave+' / 7 · ⚠️ HARD MODE',W/2,18);
   let al=enemies.filter(e=>e.hp>0&&frame>=e.spawn).length;
   cx.fillStyle='#ff5252';cx.font='bold 10px Rajdhani,sans-serif';cx.fillText(al+' ENEMIES · BASE '+baseHp+'/'+BASE_MAX,W/2,31);
   cx.textAlign='right';cx.fillStyle='#FFD100';cx.font='bold 14px Bangers,sans-serif';cx.fillText('SCORE: '+score,W-10,18);
@@ -409,14 +440,15 @@ function draw(){
   drawHUD();
   if(showResult){
     cx.fillStyle='rgba(0,0,10,0.78)';cx.fillRect(0,0,W,H);cx.textAlign='center';
-    if(wave>=5){
-      cx.fillStyle='#FFD100';cx.shadowColor='#FFD100';cx.shadowBlur=22;cx.font='bold 46px Bangers,sans-serif';cx.fillText('🏆 VICTORY! 🏆',W/2,H/2-28);
+    if(wave>=7){
+      cx.fillStyle='#FFD100';cx.shadowColor='#FFD100';cx.shadowBlur=22;cx.font='bold 46px Bangers,sans-serif';cx.fillText('🏆 KINGDOM SAVED! 🏆',W/2,H/2-28);
       cx.shadowBlur=0;cx.fillStyle='#fff';cx.font='18px Rajdhani,sans-serif';cx.fillText('Score: '+score+' · Kills: '+kills,W/2,H/2+10);
       cx.fillStyle='#aabbdd';cx.font='13px Rajdhani,sans-serif';cx.fillText('Press R to play again',W/2,H/2+34);
     }else{
       cx.fillStyle='#00e676';cx.shadowColor='#00e676';cx.shadowBlur=16;cx.font='bold 38px Bangers,sans-serif';cx.fillText('✅ WAVE '+wave+' CLEARED!',W/2,H/2-28);
-      cx.shadowBlur=0;cx.fillStyle='#fff';cx.font='17px Rajdhani,sans-serif';cx.fillText('Score: '+score+' · Kills: '+kills+' · Base: '+baseHp+'/'+BASE_MAX,W/2,H/2+8);
-      cx.fillStyle='#FFD100';cx.font='14px Rajdhani,sans-serif';cx.fillText('Press ENTER or SPACE for Wave '+(wave+1),W/2,H/2+34);
+      cx.shadowBlur=0;cx.fillStyle='#fff';cx.font='17px Rajdhani,sans-serif';cx.fillText('Score: '+score+' · Kills: '+kills+' · Base HP: '+baseHp,W/2,H/2+8);
+      cx.fillStyle='#4da6ff';cx.font='13px Rajdhani,sans-serif';cx.fillText('+35 Shields restored!',W/2,H/2+26);
+      cx.fillStyle='#FFD100';cx.font='14px Rajdhani,sans-serif';cx.fillText('Press ENTER or SPACE for Wave '+(wave+1)+' of 7',W/2,H/2+44);
     }cx.textAlign='left';
   }
   if(gameOver&&!showResult){
@@ -432,7 +464,7 @@ window.addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(e.code==='Digit1')selGun=0;if(e.code==='Digit2')selGun=1;
   if((e.code==='Enter'||e.code==='Space')&&showResult&&!gameOver&&wave<5){wave++;spawnWave(wave);}
-  if(e.code==='KeyR'){p.hp=P_MAX_HP;p.sh=P_MAX_SH;p.x=W/2;p.y=H*.72;p.facing=1;baseHp=BASE_MAX;score=0;kills=0;wave=1;gameOver=false;waveDone=false;showResult=false;bullets=[];particles=[];spawnWave(1);}
+  if(e.code==='KeyR'){p.hp=P_MAX_HP;p.sh=P_MAX_SH;p.x=W/2;p.y=H*.72;p.facing=1;baseHp=BASE_MAX;score=0;kills=0;wave=1;gameOver=false;waveDone=false;showResult=false;bullets=[];particles=[];enemies=[];spawnWave(1);}
 });
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
 cvs.addEventListener('click',()=>{if(!gameOver&&!showResult)shoot();});
@@ -546,7 +578,7 @@ function drawHUD(){
   // Hotbars
   let h1Y=H-66;
   GUN1.forEach((g,i)=>{let sel=i===p1.gun;cx.fillStyle=sel?'rgba(77,166,255,0.22)':'rgba(0,0,0,0.68)';cx.fillRect(8+i*82,h1Y,78,46);cx.strokeStyle=sel?'#4da6ff':'rgba(255,255,255,0.18)';cx.lineWidth=sel?2:1;cx.strokeRect(8+i*82,h1Y,78,46);cx.fillStyle=sel?'#4da6ff':'#aabbdd';cx.font='bold 11px Bangers,sans-serif';cx.textAlign='center';cx.fillText(g.name,8+i*82+39,h1Y+16);cx.font='9px Rajdhani,sans-serif';cx.fillText('DMG '+g.dmg,8+i*82+39,h1Y+28);cx.fillStyle=sel?'#4da6ff':'rgba(255,255,255,0.35)';cx.fillText('['+('ZX'[i])+']',8+i*82+39,h1Y+42);cx.textAlign='left';});
-  GUN2.forEach((g,i)=>{let sel=i===p2.gun,rx=W-8-78-i*82;cx.fillStyle=sel?'rgba(255,82,82,0.22)':'rgba(0,0,0,0.68)';cx.fillRect(rx,h1Y,78,46);cx.strokeStyle=sel?'#ff5252':'rgba(255,255,255,0.18)';cx.lineWidth=sel?2:1;cx.strokeRect(rx,h1Y,78,46);cx.fillStyle=sel?'#ff5252':'#aabbdd';cx.font='bold 11px Bangers,sans-serif';cx.textAlign='center';cx.fillText(g.name,rx+39,h1Y+16);cx.font='9px Rajdhani,sans-serif';cx.fillText('DMG '+g.dmg,rx+39,h1Y+28);cx.fillStyle=sel?'#ff5252':'rgba(255,255,255,0.35)';cx.fillText('['+(','===''?'.':',..'[i])+']',rx+39,h1Y+42);cx.textAlign='left';});
+  GUN2.forEach((g,i)=>{let sel=i===p2.gun,rx=W-8-78-i*82;cx.fillStyle=sel?'rgba(255,82,82,0.22)':'rgba(0,0,0,0.68)';cx.fillRect(rx,h1Y,78,46);cx.strokeStyle=sel?'#ff5252':'rgba(255,255,255,0.18)';cx.lineWidth=sel?2:1;cx.strokeRect(rx,h1Y,78,46);cx.fillStyle=sel?'#ff5252':'#aabbdd';cx.font='bold 11px Bangers,sans-serif';cx.textAlign='center';cx.fillText(g.name,rx+39,h1Y+16);cx.font='9px Rajdhani,sans-serif';cx.fillText('DMG '+g.dmg,rx+39,h1Y+28);cx.fillStyle=sel?'#ff5252':'rgba(255,255,255,0.35)';cx.fillText(i===0?'[,]':'[.]',rx+39,h1Y+42);cx.textAlign='left';});
   cx.fillStyle='rgba(0,0,10,0.55)';cx.fillRect(0,H-20,W,20);
   cx.fillStyle='rgba(150,170,210,0.6)';cx.font='9px Rajdhani,sans-serif';
   cx.fillText('P1: WASD=Move  F=Shoot  Z=Gun1  X=Gun2       P2: Arrows=Move  L=Shoot  ,=Gun1  .=Gun2       R=Restart',10,H-7);
@@ -554,18 +586,17 @@ function drawHUD(){
 function draw(){
   cx.clearRect(0,0,W,H);drawWorld();
   rocks.forEach(r=>drawRock(r));
-  let minY=Math.min(p1.y,p2.y);
-  trees.filter(t=>t.y<minY-5).forEach(t=>drawTree(t));
-  [p1,p2].filter(p=>p.y<minY+1).sort((a,b)=>a.y-b.y).forEach(p=>{
-    let wk=Math.sin(frame*.22)*8;
-    drawSoldier(p.x,p.y,p.facing,p===p1?'green':'red',wk);
+  // Depth sort all objects by y so closer=drawn on top
+  let objs=[
+    ...trees.map(t=>({k:'tree',y:t.y,d:t})),
+    {k:'p',y:p1.y,d:p1,team:'green'},
+    {k:'p',y:p2.y,d:p2,team:'red'}
+  ];
+  objs.sort((a,b)=>a.y-b.y);
+  objs.forEach(o=>{
+    if(o.k==='tree')drawTree(o.d);
+    else{let wk=Math.sin(frame*.22)*8;drawSoldier(o.d.x,o.d.y,o.d.facing,o.team,wk);}
   });
-  trees.filter(t=>t.y>=minY-5&&t.y<Math.max(p1.y,p2.y)-5).forEach(t=>drawTree(t));
-  [p1,p2].filter(p=>p.y>=minY+1).sort((a,b)=>a.y-b.y).forEach(p=>{
-    let wk=Math.sin(frame*.22)*8;
-    drawSoldier(p.x,p.y,p.facing,p===p1?'green':'red',wk);
-  });
-  trees.filter(t=>t.y>=Math.max(p1.y,p2.y)-5).forEach(t=>drawTree(t));
   [...b1,...b2].forEach(b=>{cx.save();cx.shadowColor=b.c;cx.shadowBlur=12;cx.fillStyle=b.c;cx.beginPath();cx.arc(b.x,b.y,b.r,0,Math.PI*2);cx.fill();cx.restore();});
   particles.forEach(pt=>{cx.globalAlpha=pt.l/pt.ml;cx.fillStyle=pt.c;cx.beginPath();cx.arc(pt.x,pt.y,pt.r,0,Math.PI*2);cx.fill();});cx.globalAlpha=1;
   drawHUD();
@@ -630,6 +661,121 @@ def build_2p_canvas(n1,s1,w1a,w1b,n2,s2,w2a,w2b):
                 ("__P1GUN1__",_gjs(w1a)),("__P1GUN2__",_gjs(w1b)),
                 ("__P2GUN1__",_gjs(w2a)),("__P2GUN2__",_gjs(w2b))]:
         h=h.replace(t,v)
+    return h
+
+# ── Online arena canvas ───────────────────────────────────────────────────────
+_ONLINE_CANVAS = r"""<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#020a1a;overflow:hidden;}canvas{display:block;}</style>
+</head><body><canvas id="g"></canvas><script>
+const cvs=document.getElementById('g');const cx=cvs.getContext('2d');
+const W=cvs.width=Math.min(860,window.innerWidth-4);const H=cvs.height=360;
+const P1NAME="__ON_P1NAME__",P2NAME="__ON_P2NAME__";
+const P1HP=__ON_P1HP__,P1MHP=__ON_P1MAXHP__,P1SH=__ON_P1SH__,P1MSH=__ON_P1MAXSH__;
+const P2HP=__ON_P2HP__,P2MHP=__ON_P2MAXHP__,P2SH=__ON_P2SH__,P2MSH=__ON_P2MAXSH__;
+const P1COL=__ON_P1COL__,P2COL=__ON_P2COL__;
+const PHASE="__ON_PHASE__",WINNER="__ON_WINNER__";
+const P1COVER=__ON_P1COVER__,P2COVER=__ON_P2COVER__;
+const TOTAL_COLS=7;
+function colX(c){return 55+c*(W-110)/(TOTAL_COLS-1);}
+const p1x=colX(P1COL),p2x=colX(P2COL);
+const p1y=H*0.75,p2y=H*0.75;
+let frame=0;
+let stars=Array.from({length:80},()=>({x:Math.random()*W,y:Math.random()*H*.3,r:Math.random()*1.4+.3,b:Math.random()}));
+// Cover trees fixed at col 2 and col 4
+const covX2=colX(2),covX4=colX(4);
+const covTrees=[
+  {x:covX2-18,y:H*.58,r:24,dark:false},{x:covX2,y:H*.44,r:28,dark:true},{x:covX2+16,y:H*.64,r:22,dark:false},
+  {x:covX4-14,y:H*.56,r:26,dark:false},{x:covX4+4,y:H*.42,r:30,dark:true},{x:covX4+18,y:H*.62,r:22,dark:false}
+];
+const rocks=[{x:covX2-4,y:H*.7,w:22,h:12},{x:covX4+8,y:H*.68,w:20,h:11}];
+__WORLD_JS__
+function drawAll(){
+  cx.clearRect(0,0,W,H);
+  // Sky
+  let sg=cx.createLinearGradient(0,0,0,H*0.32);
+  sg.addColorStop(0,'#020b1c');sg.addColorStop(1,'#0d2844');
+  cx.fillStyle=sg;cx.fillRect(0,0,W,H*0.32);
+  stars.forEach(s=>{cx.globalAlpha=0.4+0.6*Math.abs(Math.sin(frame*0.018+s.b*7));cx.fillStyle='#fff';cx.beginPath();cx.arc(s.x,s.y,s.r,0,Math.PI*2);cx.fill();});cx.globalAlpha=1;
+  cx.fillStyle='#ddeeff';cx.beginPath();cx.arc(W-70,36,14,0,Math.PI*2);cx.fill();
+  cx.fillStyle='#0d2844';cx.beginPath();cx.arc(W-63,33,12,0,Math.PI*2);cx.fill();
+  // Fog
+  let fg=cx.createLinearGradient(0,H*0.24,0,H*0.32);fg.addColorStop(0,'rgba(0,0,0,0)');fg.addColorStop(1,'rgba(10,40,10,0.9)');cx.fillStyle=fg;cx.fillRect(0,H*0.24,W,H*0.08);
+  // Grass
+  let gg=cx.createLinearGradient(0,H*0.32,0,H);gg.addColorStop(0,'#1d5e10');gg.addColorStop(0.4,'#185210');gg.addColorStop(1,'#0e2d07');cx.fillStyle=gg;cx.fillRect(0,H*0.32,W,H*0.68);
+  cx.strokeStyle='rgba(25,90,15,0.2)';cx.lineWidth=1;
+  for(let x=0;x<W;x+=14){cx.beginPath();cx.moveTo(x,H*0.33);cx.lineTo(x+5,H);cx.stroke();}
+  // Cover indicators
+  if(P1COVER){cx.fillStyle='rgba(0,230,118,0.15)';cx.fillRect(p1x-30,p1y-50,60,60);}
+  if(P2COVER){cx.fillStyle='rgba(0,230,118,0.15)';cx.fillRect(p2x-30,p2y-50,60,60);}
+  // Rocks
+  rocks.forEach(r=>{cx.fillStyle='#3a3a2a';cx.beginPath();cx.ellipse(r.x,r.y,r.w/2,r.h/2,0.2,0,Math.PI*2);cx.fill();cx.fillStyle='#4e4e3c';cx.beginPath();cx.ellipse(r.x-r.w*.1,r.y-r.h*.22,r.w*.28,r.h*.28,0,0,Math.PI*2);cx.fill();});
+  // Depth sort trees and players
+  let objs=[...covTrees.map(t=>({k:'t',y:t.y,d:t}))];
+  if(p1y<=p2y){objs.push({k:'p1',y:p1y});objs.push({k:'p2',y:p2y});}
+  else{objs.push({k:'p2',y:p2y});objs.push({k:'p1',y:p1y});}
+  objs.sort((a,b)=>a.y-b.y);
+  objs.forEach(o=>{
+    if(o.k==='t'){let t=o.d;cx.fillStyle='#3a2000';cx.fillRect(t.x-4,t.y,8,t.r*.9);let cl=t.dark?['#122810','#193a12','#214a18']:['#1a4410','#245c18','#2e7420'];for(let i=2;i>=0;i--){cx.fillStyle=cl[i];cx.beginPath();cx.arc(t.x,t.y-t.r*.3-i*t.r*.24,t.r*(.88-i*.1),0,Math.PI*2);cx.fill();}}
+    else if(o.k==='p1'){let wk=Math.sin(frame*.2)*6;drawSoldier(p1x,p1y,1,'green',wk);}
+    else{let wk=Math.sin(frame*.2+1)*6;drawSoldier(p2x,p2y,-1,'red',wk);}
+  });
+  // HP bars above players
+  function drawBar(px,py,hp,mhp,sh,msh,name,clr){
+    let bw=110,bx=Math.max(10,Math.min(W-bw-10,px-bw/2));
+    let by=py-65;
+    cx.fillStyle='rgba(0,0,0,0.75)';cx.fillRect(bx-2,by-2,bw+4,38);
+    cx.strokeStyle=clr;cx.lineWidth=1.5;cx.strokeRect(bx-2,by-2,bw+4,38);
+    let hc=hp/mhp>.6?'#00e676':hp/mhp>.3?'#ff9100':'#ff1744';
+    cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(bx,by,bw,11);cx.fillStyle=hc;cx.fillRect(bx,by,bw*(hp/mhp),11);
+    cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(bx,by+13,bw,9);cx.fillStyle='#40c4ff';cx.fillRect(bx,by+13,bw*(sh/msh),9);
+    cx.fillStyle=clr;cx.font='bold 10px Bangers,sans-serif';cx.textAlign='center';cx.fillText(name.toUpperCase(),px,by-4);cx.textAlign='left';
+    cx.fillStyle='#ddd';cx.font='8px Rajdhani,sans-serif';cx.textAlign='center';cx.fillText('HP '+hp+'/'+mhp,px,by+9);cx.fillText('🛡️'+sh+'/'+msh,px,by+20);cx.textAlign='left';
+    if((sh===msh?false:false)||true){
+      if(P1COVER&&px===p1x||P2COVER&&px===p2x){
+        cx.fillStyle='rgba(0,230,118,0.9)';cx.font='bold 9px Rajdhani,sans-serif';cx.textAlign='center';cx.fillText('🌲 IN COVER',px,by+30);cx.textAlign='left';
+      }
+    }
+  }
+  drawBar(p1x,p1y,P1HP,P1MHP,P1SH,P1MSH,P1NAME,'#4da6ff');
+  drawBar(p2x,p2y,P2HP,P2MHP,P2SH,P2MSH,P2NAME,'#ff5252');
+  // Cover label on trees
+  cx.fillStyle='rgba(0,230,118,0.85)';cx.font='bold 10px Rajdhani,sans-serif';cx.textAlign='center';
+  cx.fillText('🌲 COVER',colX(2),H*.36);cx.fillText('🌲 COVER',colX(4),H*.36);cx.textAlign='left';
+  // Top HUD
+  cx.fillStyle='rgba(0,0,10,0.78)';cx.fillRect(0,0,W,44);
+  let phase=PHASE,turnName=phase.startsWith('p1')?P1NAME:P2NAME;
+  let turnClr=phase.startsWith('p1')?'#4da6ff':'#ff5252';
+  let act=phase.endsWith('_move')?'MOVE':'ATTACK';
+  if(WINNER){cx.fillStyle='#FFD100';cx.shadowColor='#FFD100';cx.shadowBlur=18;cx.font='bold 22px Bangers,sans-serif';cx.textAlign='center';cx.fillText('🏆 '+WINNER.toUpperCase()+' WINS! 🏆',W/2,28);cx.shadowBlur=0;}
+  else{cx.fillStyle=turnClr;cx.shadowColor=turnClr;cx.shadowBlur=14;cx.font='bold 20px Bangers,sans-serif';cx.textAlign='center';cx.fillText('⚡ '+turnName.toUpperCase()+' — '+act+' ⚡',W/2,26);cx.shadowBlur=0;}
+  // Column dots (position markers)
+  for(let c=0;c<7;c++){
+    let cx2=colX(c);
+    cx.fillStyle=c===P1COL?'#4da6ff':c===P2COL?'#ff5252':c===2||c===4?'#00e676':'rgba(255,255,255,0.15)';
+    cx.beginPath();cx.arc(cx2,H-12,5,0,Math.PI*2);cx.fill();
+    cx.fillStyle='rgba(255,255,255,0.3)';cx.font='8px Rajdhani,sans-serif';cx.textAlign='center';cx.fillText(c,cx2,H-4);cx.textAlign='left';
+  }
+  frame++;requestAnimationFrame(drawAll);
+}
+drawAll();
+</script></body></html>"""
+
+def build_online_canvas(r):
+    n1=r.get("p1_name","P1"); n2=r.get("p2_name","P2") or "P2"
+    s1=r.get("p1_skin",skin_names[0]); s2=r.get("p2_skin",skin_names[0])
+    if s2 not in SKINS: s2=skin_names[0]
+    h=_ONLINE_CANVAS.replace("__WORLD_JS__",_world_js())
+    for t,v in [
+        ("__ON_P1NAME__",n1.replace('"','')),("__ON_P2NAME__",n2.replace('"','')),
+        ("__ON_P1HP__",str(r.get("p1_hp") or 0)),("__ON_P1MAXHP__",str(SKINS[s1]["health"])),
+        ("__ON_P1SH__",str(r.get("p1_sh") or 0)),("__ON_P1MAXSH__",str(SKINS[s1]["shields"])),
+        ("__ON_P2HP__",str(r.get("p2_hp") or 0)),("__ON_P2MAXHP__",str(SKINS[s2]["health"])),
+        ("__ON_P2SH__",str(r.get("p2_sh") or 0)),("__ON_P2MAXSH__",str(SKINS[s2]["shields"])),
+        ("__ON_P1COL__",str(r.get("p1_col",1))),("__ON_P2COL__",str(r.get("p2_col",5))),
+        ("__ON_PHASE__",r.get("phase","waiting")),("__ON_WINNER__",r.get("winner","") or ""),
+        ("__ON_P1COVER__","true" if r.get("p1_cover") else "false"),
+        ("__ON_P2COVER__","true" if r.get("p2_cover") else "false"),
+    ]: h=h.replace(t,v)
     return h
 
 # ── Online 2P combat helper ───────────────────────────────────────────────────
@@ -748,18 +894,21 @@ elif st.session_state.game_mode=="lobby_sp":
         spw1=st.selectbox("🔫 Gun 1",weapon_names,index=0,key="spw1")
         spw2=st.selectbox("💣 Gun 2",weapon_names,index=1,key="spw2")
     with c2:
-        st.markdown("""**HARD MODE — 5 waves, more enemies, faster movement, bigger damage!**
+        st.markdown("""**HARD MODE — 7 waves. Enemies get faster every wave!**
 
-| Wave | Enemies |
-|------|---------|
-| 1 | 5 🧟 |
-| 2 | 7 🧟 + 3 💂 |
-| 3 | 6 🧟 + 5 💂 + 2 👾 |
-| 4 | 9 🧟 + 6 💂 + 2 👾 |
-| 5 | 9 🧟 + 7 💂 + 4 👾 |
+| Wave | 🧟 Zombies | 💂 Soldiers | 👾 Bosses |
+|------|-----------|------------|---------|
+| 1 | 5 | — | — |
+| 2 | 8 | 3 | — |
+| 3 | 7 | 5 | 2 |
+| 4 | 11 | 7 | 3 |
+| 5 | 10 | 9 | 4 |
+| 6 | 13 | 10 | 6 |
+| 7 | 16 | 12 | 8 |
 
-👾 Boss now has **260 HP** and hits for **85 damage**. Soldiers run at 1.6× speed!
-Walk into 🌲 trees or 🪨 rocks for 50% cover protection.
+👾 Boss: **340 HP · 100 dmg** · 💂 Soldier: **150 HP · 58 dmg** · Enemies gain +8% speed per wave.
+🌲 Trees and 🪨 rocks give **50% cover**. Survive all 7 waves to save the kingdom!
++35 shields restored between waves.
 """)
     bc1,bc2=st.columns(2)
     with bc1:
@@ -874,26 +1023,8 @@ elif st.session_state.game_mode=="online_game":
         my_name=r["p1_name"] if role=="p1" else r["p2_name"]
         opp_name=r["p2_name"] if role=="p1" else r["p1_name"]
         my_color="#4da6ff" if role=="p1" else "#ff5252"
-        # Arena visual
-        p1c=r["p1_col"]; p2c=r["p2_col"]
-        cells="".join([
-            (f'<div style="flex:1;background:rgba({int(SKINS[s1]["color"][1:3],16)},{int(SKINS[s1]["color"][3:5],16)},{int(SKINS[s1]["color"][5:7],16)},.30);border:1.5px solid {SKINS[s1]["color"]};border-radius:8px;padding:10px 4px;text-align:center;min-width:55px;"><div style="font-size:26px;">{SKINS[s1]["avatar"]}</div><div style="font-size:9px;color:white;">{n1[:5].upper()}</div></div>' if i==p1c else
-             f'<div style="flex:1;background:rgba({int(SKINS[s2]["color"][1:3],16)},{int(SKINS[s2]["color"][3:5],16)},{int(SKINS[s2]["color"][5:7],16)},.30);border:1.5px solid {SKINS[s2]["color"]};border-radius:8px;padding:10px 4px;text-align:center;min-width:55px;"><div style="font-size:26px;">{SKINS[s2]["avatar"]}</div><div style="font-size:9px;color:white;">{n2[:5].upper()}</div></div>' if i==p2c else
-             '<div style="flex:1;background:rgba(15,50,15,.50);border:1.5px solid #3a8a3a;border-radius:8px;padding:10px 4px;text-align:center;min-width:55px;"><div style="font-size:26px;">🌲</div><div style="font-size:9px;color:white;">COVER</div></div>' if i in (2,4) else
-             '<div style="flex:1;background:rgba(0,0,0,.15);border:1.5px solid rgba(255,255,255,.07);border-radius:8px;padding:10px 4px;text-align:center;min-width:55px;"><div style="font-size:26px;">·</div></div>')
-            for i in range(7)])
-        if phase=="done":
-            wn=r.get("winner","?")
-            st.markdown(f"""<div style="text-align:center;padding:14px;">
-<div style="font-family:'Bangers',sans-serif;font-size:38px;color:#FFD100;">🏆 {wn.upper()} WINS! 🏆</div></div>""",unsafe_allow_html=True)
-        else:
-            turn_c="#4da6ff" if phase.startswith("p1") else "#ff5252"
-            tn=n1 if phase.startswith("p1") else n2
-            aw="MOVE" if phase.endswith("_move") else "ATTACK"
-            st.markdown(f"""<div style="text-align:center;padding:7px;background:rgba(5,10,40,.88);
-border:2px solid {turn_c};border-radius:8px;box-shadow:0 0 22px {turn_c}55;margin-bottom:6px;">
-<div style="font-family:'Bangers',sans-serif;font-size:18px;color:{turn_c};">⚡ {tn.upper()} — {aw} ⚡</div></div>""",unsafe_allow_html=True)
-        st.markdown(f'<div style="background:rgba(0,0,10,.80);border:1px solid rgba(255,200,0,.28);border-radius:12px;padding:10px;margin:6px 0;"><div style="display:flex;gap:5px;justify-content:center;">{cells}</div></div>',unsafe_allow_html=True)
+        # Canvas arena view
+        components.html(build_online_canvas(r), height=375)
         c1,c2=st.columns(2)
         with c1: hp_row(n1,s1,r["p1_hp"] or 0,r["p1_sh"] or 0,SKINS[s1]["health"],SKINS[s1]["shields"],SKINS[s1]["color"])
         with c2: hp_row(n2,s2,r["p2_hp"] or 0,r["p2_sh"] or 0,SKINS[s2]["health"],SKINS[s2]["shields"],SKINS[s2]["color"])
