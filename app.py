@@ -681,9 +681,7 @@ def init_state():
     defs={"game_mode":None,"sp_skin":None,"sp_w1":None,"sp_w2":None,"sp_name":"Ayaan",
           "lc_n1":"Ayaan","lc_n2":"Omer","lc_s1":skin_names[0],"lc_s2":skin_names[1],
           "lc_w1a":weapon_names[0],"lc_w1b":weapon_names[1],"lc_w2a":weapon_names[2],"lc_w2b":weapon_names[3],
-          "room_code":None,"room_role":None,
-          "on_n":None,"on_s":None,"on_w1":None,"on_w2":None,
-          "on_join_code":"","on_join_error":""}
+          "room_code":None,"room_role":None}
     for k,v in defs.items():
         if k not in st.session_state: st.session_state[k]=v
 
@@ -812,7 +810,9 @@ elif st.session_state.game_mode=="lobby_2p_online":
         st.markdown("#### I want to...")
         if st.button("🏠 CREATE ROOM (I go first)",use_container_width=True,type="primary",key="create_room"):
             code=make_room(on_n,on_s,on_w1,on_w2)
-            st.session_state.update({"room_code":code,"room_role":"p1","on_n":on_n,"on_s":on_s,"on_w1":on_w1,"on_w2":on_w2,"game_mode":"online_wait"})
+            st.session_state["room_code"]=code
+            st.session_state["room_role"]="p1"
+            st.session_state["game_mode"]="online_wait"
             st.rerun()
         st.markdown("---")
         jc=st.text_input("Room code from friend",max_chars=4,key="join_code_in",placeholder="e.g. 4827")
@@ -820,7 +820,9 @@ elif st.session_state.game_mode=="lobby_2p_online":
             jc=jc.strip()
             ok=join_room(jc,on_n,on_s,on_w1,on_w2)
             if ok:
-                st.session_state.update({"room_code":jc,"room_role":"p2","on_n":on_n,"on_s":on_s,"on_w1":on_w1,"on_w2":on_w2,"game_mode":"online_game"})
+                st.session_state["room_code"]=jc
+                st.session_state["room_role"]="p2"
+                st.session_state["game_mode"]="online_game"
                 st.rerun()
             else:
                 st.error("Room not found or already full. Check the code!")
