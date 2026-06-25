@@ -844,9 +844,10 @@ Share this code with your friend. They open the same URL and click "Join Room".<
         st.success(f"✅ {r.get('p2_name','Friend')} joined! Starting game...")
         st.session_state.game_mode="online_game"; st.rerun()
     else:
-        st.info("⏳ Waiting for your friend to join...")
-        components.html('<script>setTimeout(()=>window.parent.location.reload(),3000)</script>',height=0)
-    if st.button("🏠 CANCEL",key="cancel_wait"): full_reset(); st.rerun()
+        st.info("⏳ Waiting for your friend to join... (auto-checks every 3 seconds)")
+        if st.button("🏠 CANCEL",key="cancel_wait"): full_reset(); st.rerun()
+        time.sleep(3)
+        st.rerun()
 
 elif st.session_state.game_mode=="online_game":
     code=st.session_state.room_code
@@ -888,8 +889,9 @@ border:2px solid {turn_c};border-radius:8px;box-shadow:0 0 22px {turn_c}55;margi
         st.markdown("---")
         if phase!="done":
             if not my_turn:
-                st.info(f"⏳ Waiting for **{opp_name}** to {phase.split('_')[1]}...")
-                components.html('<script>setTimeout(()=>window.parent.location.reload(),2500)</script>',height=0)
+                st.info(f"⏳ Waiting for **{opp_name}** to {phase.split('_')[1]}... (auto-checks every 3 seconds)")
+                time.sleep(3)
+                st.rerun()
             else:
                 st.success(f"✅ YOUR TURN, **{my_name}**! ({phase.split('_')[1].upper()})")
                 COVER_POS_O={2,4}
