@@ -6,22 +6,29 @@ from gamedata import SKINS, WEAPONS
 
 st.set_page_config(page_title="Fortnite Battle Simulator", page_icon="💥", layout="wide")
 
-# ── Shared online rooms (module-level, survives across browser sessions) ──────
-_ROOMS: dict = {}
-_LOCK  = threading.Lock()
+# ── Shared online rooms ───────────────────────────────────────────────────────
+# st.cache_resource creates a TRUE app-wide singleton shared across ALL user
+# sessions — the correct Streamlit way to share mutable state between browsers.
+@st.cache_resource
+def _store():
+    return {"rooms": {}, "lock": threading.Lock()}
+
+def _rooms():  return _store()["rooms"]
+def _lock():   return _store()["lock"]
 
 def _cleanup():
     now = time.time()
-    with _LOCK:
-        stale = [k for k,v in _ROOMS.items() if now - v.get("ts",0) > 7200]
-        for k in stale: del _ROOMS[k]
+    with _lock():
+        stale = [k for k,v in _rooms().items() if now - v.get("ts",0) > 7200]
+        for k in stale: del _rooms()[k]
 
 def make_room(n1, sk1, w1a, w1b):
     _cleanup()
+    rooms = _rooms()
     code = str(random.randint(1000, 9999))
-    while code in _ROOMS: code = str(random.randint(1000,9999))
-    with _LOCK:
-        _ROOMS[code] = {
+    with _lock():
+        while code in rooms: code = str(random.randint(1000,9999))
+        rooms[code] = {
             "p1_name":n1,"p1_skin":sk1,"p1_w1":w1a,"p1_w2":w1b,
             "p1_hp":SKINS[sk1]["health"],"p1_sh":SKINS[sk1]["shields"],
             "p2_name":None,"p2_skin":None,"p2_w1":None,"p2_w2":None,
@@ -33,22 +40,24 @@ def make_room(n1, sk1, w1a, w1b):
     return code
 
 def join_room(code, n2, sk2, w2a, w2b):
-    with _LOCK:
-        if code not in _ROOMS: return False
-        r = _ROOMS[code]
-        if r["p2_name"] is not None: return False
+    rooms = _rooms()
+    with _lock():
+        if code not in rooms: return "notfound"
+        r = rooms[code]
+        if r["p2_name"] is not None: return "full"
         r.update({"p2_name":n2,"p2_skin":sk2,"p2_w1":w2a,"p2_w2":w2b,
                    "p2_hp":SKINS[sk2]["health"],"p2_sh":SKINS[sk2]["shields"],
                    "phase":"p1_move","ts":time.time()})
-        return True
+        return "ok"
 
 def get_room(code):
-    with _LOCK: return dict(_ROOMS.get(code,{}))
+    with _lock(): return dict(_rooms().get(code,{}))
 
 def patch_room(code, **kw):
-    with _LOCK:
-        if code in _ROOMS:
-            _ROOMS[code].update(kw); _ROOMS[code]["ts"]=time.time()
+    rooms = _rooms()
+    with _lock():
+        if code in rooms:
+            rooms[code].update(kw); rooms[code]["ts"]=time.time()
 
 # ── Skin image API ────────────────────────────────────────────────────────────
 @st.cache_data(ttl=3600)
@@ -818,14 +827,16 @@ elif st.session_state.game_mode=="lobby_2p_online":
         jc=st.text_input("Room code from friend",max_chars=4,key="join_code_in",placeholder="e.g. 4827")
         if st.button("🚪 JOIN ROOM",use_container_width=True,key="join_room"):
             jc=jc.strip()
-            ok=join_room(jc,on_n,on_s,on_w1,on_w2)
-            if ok:
+            result=join_room(jc,on_n,on_s,on_w1,on_w2)
+            if result=="ok":
                 st.session_state["room_code"]=jc
                 st.session_state["room_role"]="p2"
                 st.session_state["game_mode"]="online_game"
                 st.rerun()
+            elif result=="notfound":
+                st.error("❌ Room not found. Check the 4-digit code — your friend must create the room first.")
             else:
-                st.error("Room not found or already full. Check the code!")
+                st.error("❌ Room already full.")
     if st.button("◀ BACK",key="bon"): st.session_state.game_mode=None; st.rerun()
 
 elif st.session_state.game_mode=="online_wait":
