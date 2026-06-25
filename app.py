@@ -119,35 +119,88 @@ def hp_row(nm,sk,h,s,mh,ms,c):
 # Uses __TOKENS__ replaced by Python — no f-string brace hell
 # ══════════════════════════════════════════════════════════════════════════════
 def _world_js():
-    """Shared world drawing JS used by both SP and 2P canvas games"""
+    """Shared world drawing JS used by SP, 2P, and online canvas games"""
     return r"""
 function drawWorld(){
-  let sg=cx.createLinearGradient(0,0,0,H*0.3);
-  sg.addColorStop(0,'#020b1c');sg.addColorStop(1,'#0d2844');
-  cx.fillStyle=sg;cx.fillRect(0,0,W,H*0.3);
+  let hy=H*0.36;
+  // Deep night sky
+  let sg=cx.createLinearGradient(0,0,0,hy);
+  sg.addColorStop(0,'#010810');sg.addColorStop(0.65,'#081830');sg.addColorStop(1,'#0f3020');
+  cx.fillStyle=sg;cx.fillRect(0,0,W,hy);
+  // Stars
   stars.forEach(s=>{
-    cx.globalAlpha=0.4+0.6*Math.abs(Math.sin(frame*0.018+s.b*7));
+    cx.globalAlpha=0.3+0.7*Math.abs(Math.sin(frame*0.016+s.b*8));
     cx.fillStyle='#fff';cx.beginPath();cx.arc(s.x,s.y,s.r,0,Math.PI*2);cx.fill();
   });cx.globalAlpha=1;
-  cx.fillStyle='#ddeeff';cx.beginPath();cx.arc(W-80,40,16,0,Math.PI*2);cx.fill();
-  cx.fillStyle='#0d2844';cx.beginPath();cx.arc(W-73,37,14,0,Math.PI*2);cx.fill();
-  let fg=cx.createLinearGradient(0,H*0.22,0,H*0.3);
-  fg.addColorStop(0,'rgba(0,0,0,0)');fg.addColorStop(1,'rgba(10,40,10,0.95)');
-  cx.fillStyle=fg;cx.fillRect(0,H*0.22,W,H*0.08);
-  let gg=cx.createLinearGradient(0,H*0.3,0,H);
-  gg.addColorStop(0,'#1d5e10');gg.addColorStop(0.45,'#185210');gg.addColorStop(1,'#0e2d07');
-  cx.fillStyle=gg;cx.fillRect(0,H*0.3,W,H*0.7);
-  cx.strokeStyle='rgba(25,90,15,0.2)';cx.lineWidth=1;
-  for(let x=0;x<W;x+=14){cx.beginPath();cx.moveTo(x,H*0.31);cx.lineTo(x+5,H);cx.stroke();}
+  // Moon + glow
+  let mr=cx.createRadialGradient(W-95,55,0,W-95,55,80);
+  mr.addColorStop(0,'rgba(200,230,255,0.10)');mr.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=mr;cx.fillRect(W-175,0,160,135);
+  cx.fillStyle='#e8f4ff';cx.beginPath();cx.arc(W-95,55,24,0,Math.PI*2);cx.fill();
+  cx.fillStyle='#081830';cx.beginPath();cx.arc(W-83,50,20,0,Math.PI*2);cx.fill();
+  // Horizon atmospheric haze
+  let ahg=cx.createLinearGradient(0,hy-40,0,hy+30);
+  ahg.addColorStop(0,'rgba(0,0,0,0)');ahg.addColorStop(0.5,'rgba(18,55,18,0.7)');ahg.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=ahg;cx.fillRect(0,hy-40,W,70);
+  // 3D ground base — bright near horizon, dark near camera
+  let gg=cx.createLinearGradient(0,hy,0,H);
+  gg.addColorStop(0,'#3a8a1a');gg.addColorStop(0.12,'#2a6a10');
+  gg.addColorStop(0.45,'#1a4a08');gg.addColorStop(1,'#091d03');
+  cx.fillStyle=gg;cx.fillRect(0,hy,W,H-hy);
+  // 3D perspective grid — logarithmic horizontal lines
+  for(let i=1;i<=28;i++){
+    let t=Math.pow(i/28,2.4);
+    let y=hy+(H-hy)*(1-t);
+    let alpha=0.05+0.28*t;
+    cx.strokeStyle=`rgba(12,50,6,${alpha})`;cx.lineWidth=Math.max(0.4,t*2.5);
+    cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();
+  }
+  // Vanishing perspective lines from horizon centre
+  let vx=W/2;
+  for(let i=0;i<=32;i++){
+    let bx=(i/32)*W;
+    let alpha=0.05+0.06*Math.abs(0.5-i/32)*2;
+    cx.strokeStyle=`rgba(18,65,8,${alpha})`;cx.lineWidth=0.7;
+    cx.beginPath();cx.moveTo(vx,hy);cx.lineTo(bx,H);cx.stroke();
+  }
+  // Dirt path converging to vanishing point
+  let pw1=10,pw2=W*0.32;
+  let pg=cx.createLinearGradient(0,hy,0,H);
+  pg.addColorStop(0,'rgba(65,42,18,0.35)');pg.addColorStop(1,'rgba(42,26,8,0.60)');
+  cx.fillStyle=pg;
+  cx.beginPath();cx.moveTo(vx-pw1,hy);cx.lineTo(vx+pw1,hy);cx.lineTo(vx+pw2,H);cx.lineTo(vx-pw2,H);cx.closePath();cx.fill();
+  // Path edge highlights
+  cx.strokeStyle='rgba(80,55,20,0.25)';cx.lineWidth=1.5;
+  cx.beginPath();cx.moveTo(vx-pw1,hy);cx.lineTo(vx-pw2,H);cx.stroke();
+  cx.beginPath();cx.moveTo(vx+pw1,hy);cx.lineTo(vx+pw2,H);cx.stroke();
+  // Grass blade texture (pre-seeded pattern, not random so no flicker)
+  cx.strokeStyle='rgba(45,120,18,0.16)';cx.lineWidth=1;
+  for(let x=0;x<W;x+=8){
+    let seed=(x*7919)%100;
+    let ys=hy+3+seed*0.04;
+    let xe=x+(seed>50?3:-3);
+    cx.beginPath();cx.moveTo(x,ys);cx.lineTo(xe,H-8);cx.stroke();
+  }
 }
 function drawRock(r){
   cx.fillStyle='#3a3a2a';cx.beginPath();cx.ellipse(r.x,r.y,r.w/2,r.h/2,0.2,0,Math.PI*2);cx.fill();
-  cx.fillStyle='#4e4e3c';cx.beginPath();cx.ellipse(r.x-r.w*.1,r.y-r.h*.22,r.w*.28,r.h*.28,0,0,Math.PI*2);cx.fill();
+  cx.fillStyle='#555548';cx.beginPath();cx.ellipse(r.x-r.w*.12,r.y-r.h*.28,r.w*.30,r.h*.30,0,0,Math.PI*2);cx.fill();
+  cx.fillStyle='rgba(255,255,255,0.06)';cx.beginPath();cx.ellipse(r.x-r.w*.2,r.y-r.h*.3,r.w*.18,r.h*.18,0,0,Math.PI*2);cx.fill();
 }
 function drawTree(t){
-  cx.fillStyle='#3a2000';cx.fillRect(t.x-4,t.y,8,t.r*.9);
-  let cl=t.dark?['#122810','#193a12','#214a18']:['#1a4410','#245c18','#2e7420'];
-  for(let i=2;i>=0;i--){cx.fillStyle=cl[i];cx.beginPath();cx.arc(t.x,t.y-t.r*.3-i*t.r*.24,t.r*(.88-i*.1),0,Math.PI*2);cx.fill();}
+  // Shadow
+  cx.fillStyle='rgba(0,0,0,0.25)';cx.beginPath();cx.ellipse(t.x+6,t.y+6,t.r*.55,t.r*.18,0.3,0,Math.PI*2);cx.fill();
+  // Trunk
+  cx.fillStyle='#3a2000';cx.fillRect(t.x-5,t.y,10,t.r*.95);
+  cx.fillStyle='#2a1500';cx.fillRect(t.x,t.y,5,t.r*.95);
+  // Canopy layers (3 overlapping circles, darkest at back)
+  let cl=t.dark?['#0e2008','#162e0e','#1e4014']:['#153610','#1e5018','#2a7020'];
+  for(let i=2;i>=0;i--){
+    cx.fillStyle=cl[i];
+    cx.beginPath();cx.arc(t.x+(i-1)*2,t.y-t.r*.3-i*t.r*.26,t.r*(.90-i*.08),0,Math.PI*2);cx.fill();
+  }
+  // Highlight dot on top canopy
+  cx.fillStyle='rgba(80,180,40,0.18)';cx.beginPath();cx.arc(t.x-t.r*.2,t.y-t.r*.7,t.r*.25,0,Math.PI*2);cx.fill();
 }
 function drawCastle(){
   let bx=W/2,by=H-38,bw=200,bh=100,tw=52,th=150;
@@ -241,7 +294,7 @@ _SP_HTML = r"""<!DOCTYPE html><html><head><meta charset="UTF-8">
 <style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#020a1a;overflow:hidden;}canvas{display:block;cursor:crosshair;}</style>
 </head><body><canvas id="g"></canvas><script>
 const cvs=document.getElementById('g');const cx=cvs.getContext('2d');
-const W=cvs.width=Math.min(860,window.innerWidth-4);const H=cvs.height=530;
+const W=cvs.width=Math.min(1100,window.innerWidth-4);const H=cvs.height=680;
 const PNAME="__PNAME__";const P_MAX_HP=__PHP__;const P_MAX_SH=__PSH__;
 const ABILITY_TYPE="__ATYPE__";const ABILITY_VAL=__AVAL__;const BASE_MAX=300;
 const GUN=[__GUN1__,__GUN2__];
@@ -250,9 +303,9 @@ let enemies=[],bullets=[],particles=[],trees=[],rocks=[];
 let wave=1,score=0,kills=0,frame=0,cooldown=0,selGun=0;
 let gameOver=false,waveDone=false,showResult=false,baseHp=BASE_MAX;
 let keys={};
-let stars=Array.from({length:90},()=>({x:Math.random()*W,y:Math.random()*H*.28,r:Math.random()*1.5+.3,b:Math.random()}));
-for(let i=0;i<20;i++)trees.push({x:30+Math.random()*(W-60),y:55+Math.random()*(H*.53),r:20+Math.random()*18,dark:Math.random()<.4});
-for(let i=0;i<7;i++)rocks.push({x:60+Math.random()*(W-120),y:90+Math.random()*(H*.42),w:18+Math.random()*16,h:10+Math.random()*10});
+let stars=Array.from({length:130},()=>({x:Math.random()*W,y:Math.random()*H*.30,r:Math.random()*1.8+.3,b:Math.random()}));
+for(let i=0;i<40;i++)trees.push({x:25+Math.random()*(W-50),y:60+Math.random()*(H*.55),r:22+Math.random()*24,dark:Math.random()<.45});
+for(let i=0;i<14;i++)rocks.push({x:50+Math.random()*(W-100),y:100+Math.random()*(H*.44),w:20+Math.random()*22,h:12+Math.random()*14});
 __WORLD_JS__
 function spawnWave(n){
   enemies=[];
@@ -293,8 +346,8 @@ function shoot(){
 function update(){
   if(gameOver||showResult)return;
   frame++;if(cooldown>0)cooldown--;
-  if(keys['KeyW']||keys['ArrowUp'])p.y=Math.max(H*.33+8,p.y-p.spd);
-  if(keys['KeyS']||keys['ArrowDown'])p.y=Math.min(H-82,p.y+p.spd);
+  if(keys['KeyW']||keys['ArrowUp'])p.y=Math.max(H*.37+8,p.y-p.spd);
+  if(keys['KeyS']||keys['ArrowDown'])p.y=Math.min(H-90,p.y+p.spd);
   if(keys['KeyA']||keys['ArrowLeft']){p.x=Math.max(16,p.x-p.spd);p.facing=-1;}
   if(keys['KeyD']||keys['ArrowRight']){p.x=Math.min(W-16,p.x+p.spd);p.facing=1;}
   if(keys['Space']||keys['KeyF'])shoot();
@@ -477,7 +530,7 @@ _2P_HTML = r"""<!DOCTYPE html><html><head><meta charset="UTF-8">
 <style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#020a1a;overflow:hidden;}canvas{display:block;cursor:crosshair;}</style>
 </head><body><canvas id="g"></canvas><script>
 const cvs=document.getElementById('g');const cx=cvs.getContext('2d');
-const W=cvs.width=Math.min(860,window.innerWidth-4);const H=cvs.height=530;
+const W=cvs.width=Math.min(1100,window.innerWidth-4);const H=cvs.height=680;
 const P1NAME="__P1NAME__";const P2NAME="__P2NAME__";
 const P1_MAX_HP=__P1HP__;const P1_MAX_SH=__P1SH__;
 const P2_MAX_HP=__P2HP__;const P2_MAX_SH=__P2SH__;
@@ -485,16 +538,14 @@ const P1_ATYPE="__P1ATYPE__";const P1_AVAL=__P1AVAL__;
 const P2_ATYPE="__P2ATYPE__";const P2_AVAL=__P2AVAL__;
 const GUN1=[__P1GUN1__,__P1GUN2__];
 const GUN2=[__P2GUN1__,__P2GUN2__];
-let p1={x:W*.15,y:H*.72,hp:P1_MAX_HP,sh:P1_MAX_SH,spd:3.4,facing:1,cd:0,gun:0};
-let p2={x:W*.85,y:H*.72,hp:P2_MAX_HP,sh:P2_MAX_SH,spd:3.4,facing:-1,cd:0,gun:0};
+let p1={x:W*.12,y:H*.74,hp:P1_MAX_HP,sh:P1_MAX_SH,spd:3.8,facing:1,cd:0,gun:0};
+let p2={x:W*.88,y:H*.74,hp:P2_MAX_HP,sh:P2_MAX_SH,spd:3.8,facing:-1,cd:0,gun:0};
 let b1=[],b2=[],particles=[],trees=[],rocks=[];
 let frame=0,gameOver=false,winner=null,score1=0,score2=0;
 let keys={};
-let stars=Array.from({length:90},()=>({x:Math.random()*W,y:Math.random()*H*.28,r:Math.random()*1.5+.3,b:Math.random()}));
-// Cover objects placed in centre of arena
-const COV_TREES=8,COV_ROCKS=4;
-for(let i=0;i<COV_TREES;i++)trees.push({x:W*.22+Math.random()*(W*.56),y:60+Math.random()*(H*.54),r:20+Math.random()*18,dark:Math.random()<.4});
-for(let i=0;i<COV_ROCKS;i++)rocks.push({x:W*.18+Math.random()*(W*.64),y:100+Math.random()*(H*.38),w:18+Math.random()*14,h:10+Math.random()*10});
+let stars=Array.from({length:130},()=>({x:Math.random()*W,y:Math.random()*H*.30,r:Math.random()*1.8+.3,b:Math.random()}));
+for(let i=0;i<26;i++)trees.push({x:W*.10+Math.random()*(W*.80),y:62+Math.random()*(H*.55),r:22+Math.random()*24,dark:Math.random()<.45});
+for(let i=0;i<10;i++)rocks.push({x:W*.08+Math.random()*(W*.84),y:105+Math.random()*(H*.40),w:20+Math.random()*22,h:12+Math.random()*14});
 __WORLD_JS__
 function inCover(px,py){
   for(let t of trees)if(Math.hypot(px-t.x,py-t.y)<t.r+22)return true;
@@ -533,14 +584,14 @@ function update(){
   frame++;
   if(p1.cd>0)p1.cd--;if(p2.cd>0)p2.cd--;
   // P1: WASD+F
-  if(keys['KeyW'])p1.y=Math.max(H*.33+8,p1.y-p1.spd);
-  if(keys['KeyS'])p1.y=Math.min(H-80,p1.y+p1.spd);
+  if(keys['KeyW'])p1.y=Math.max(H*.37+8,p1.y-p1.spd);
+  if(keys['KeyS'])p1.y=Math.min(H-90,p1.y+p1.spd);
   if(keys['KeyA']){p1.x=Math.max(16,p1.x-p1.spd);p1.facing=-1;}
   if(keys['KeyD']){p1.x=Math.min(W-16,p1.x+p1.spd);p1.facing=1;}
   if(keys['KeyF'])fire(p1,p2,GUN1,b1,P1_ATYPE,P1_AVAL);
   // P2: Arrows+L
-  if(keys['ArrowUp'])p2.y=Math.max(H*.33+8,p2.y-p2.spd);
-  if(keys['ArrowDown'])p2.y=Math.min(H-80,p2.y+p2.spd);
+  if(keys['ArrowUp'])p2.y=Math.max(H*.37+8,p2.y-p2.spd);
+  if(keys['ArrowDown'])p2.y=Math.min(H-90,p2.y+p2.spd);
   if(keys['ArrowLeft']){p2.x=Math.max(16,p2.x-p2.spd);p2.facing=-1;}
   if(keys['ArrowRight']){p2.x=Math.min(W-16,p2.x+p2.spd);p2.facing=1;}
   if(keys['KeyL'])fire(p2,p1,GUN2,b2,P2_ATYPE,P2_AVAL);
@@ -665,10 +716,10 @@ def build_2p_canvas(n1,s1,w1a,w1b,n2,s2,w2a,w2b):
 
 # ── Online arena canvas ───────────────────────────────────────────────────────
 _ONLINE_CANVAS = r"""<!DOCTYPE html><html><head><meta charset="UTF-8">
-<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#020a1a;overflow:hidden;}canvas{display:block;}</style>
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#010810;overflow:hidden;}canvas{display:block;}</style>
 </head><body><canvas id="g"></canvas><script>
 const cvs=document.getElementById('g');const cx=cvs.getContext('2d');
-const W=cvs.width=Math.min(860,window.innerWidth-4);const H=cvs.height=360;
+const W=cvs.width=Math.min(1100,window.innerWidth-4);const H=cvs.height=560;
 const P1NAME="__ON_P1NAME__",P2NAME="__ON_P2NAME__";
 const P1HP=__ON_P1HP__,P1MHP=__ON_P1MAXHP__,P1SH=__ON_P1SH__,P1MSH=__ON_P1MAXSH__;
 const P2HP=__ON_P2HP__,P2MHP=__ON_P2MAXHP__,P2SH=__ON_P2SH__,P2MSH=__ON_P2MAXSH__;
@@ -676,88 +727,79 @@ const P1COL=__ON_P1COL__,P2COL=__ON_P2COL__;
 const PHASE="__ON_PHASE__",WINNER="__ON_WINNER__";
 const P1COVER=__ON_P1COVER__,P2COVER=__ON_P2COVER__;
 const TOTAL_COLS=7;
-function colX(c){return 55+c*(W-110)/(TOTAL_COLS-1);}
+function colX(c){return 70+c*(W-140)/(TOTAL_COLS-1);}
+// Players sit on ground level
+const GY=H*0.78;
 const p1x=colX(P1COL),p2x=colX(P2COL);
-const p1y=H*0.75,p2y=H*0.75;
 let frame=0;
-let stars=Array.from({length:80},()=>({x:Math.random()*W,y:Math.random()*H*.3,r:Math.random()*1.4+.3,b:Math.random()}));
-// Cover trees fixed at col 2 and col 4
-const covX2=colX(2),covX4=colX(4);
-const covTrees=[
-  {x:covX2-18,y:H*.58,r:24,dark:false},{x:covX2,y:H*.44,r:28,dark:true},{x:covX2+16,y:H*.64,r:22,dark:false},
-  {x:covX4-14,y:H*.56,r:26,dark:false},{x:covX4+4,y:H*.42,r:30,dark:true},{x:covX4+18,y:H*.62,r:22,dark:false}
-];
-const rocks=[{x:covX2-4,y:H*.7,w:22,h:12},{x:covX4+8,y:H*.68,w:20,h:11}];
+let stars=Array.from({length:130},()=>({x:Math.random()*W,y:Math.random()*H*.30,r:Math.random()*1.8+.3,b:Math.random()}));
+// Scattered trees all over arena (same layout every load — seeded positions)
+const trees=[];
+const SEED_POS=[[0.08,0.50],[0.14,0.65],[0.18,0.45],[0.25,0.58],[0.22,0.72],[0.32,0.48],
+  [0.38,0.62],[0.35,0.78],[0.45,0.52],[0.50,0.44],[0.55,0.68],[0.58,0.54],
+  [0.62,0.74],[0.68,0.46],[0.72,0.60],[0.78,0.50],[0.82,0.70],[0.88,0.56],[0.92,0.66],[0.96,0.48]];
+SEED_POS.forEach((p,i)=>trees.push({x:p[0]*W,y:p[1]*H,r:20+i%3*8,dark:i%3===1}));
+const rocks=[[0.28,0.72],[0.48,0.66],[0.70,0.70],[0.85,0.62]].map(p=>({x:p[0]*W,y:p[1]*H,w:22+Math.random()*14,h:13+Math.random()*9}));
 __WORLD_JS__
-function drawAll(){
-  cx.clearRect(0,0,W,H);
-  // Sky
-  let sg=cx.createLinearGradient(0,0,0,H*0.32);
-  sg.addColorStop(0,'#020b1c');sg.addColorStop(1,'#0d2844');
-  cx.fillStyle=sg;cx.fillRect(0,0,W,H*0.32);
-  stars.forEach(s=>{cx.globalAlpha=0.4+0.6*Math.abs(Math.sin(frame*0.018+s.b*7));cx.fillStyle='#fff';cx.beginPath();cx.arc(s.x,s.y,s.r,0,Math.PI*2);cx.fill();});cx.globalAlpha=1;
-  cx.fillStyle='#ddeeff';cx.beginPath();cx.arc(W-70,36,14,0,Math.PI*2);cx.fill();
-  cx.fillStyle='#0d2844';cx.beginPath();cx.arc(W-63,33,12,0,Math.PI*2);cx.fill();
-  // Fog
-  let fg=cx.createLinearGradient(0,H*0.24,0,H*0.32);fg.addColorStop(0,'rgba(0,0,0,0)');fg.addColorStop(1,'rgba(10,40,10,0.9)');cx.fillStyle=fg;cx.fillRect(0,H*0.24,W,H*0.08);
-  // Grass
-  let gg=cx.createLinearGradient(0,H*0.32,0,H);gg.addColorStop(0,'#1d5e10');gg.addColorStop(0.4,'#185210');gg.addColorStop(1,'#0e2d07');cx.fillStyle=gg;cx.fillRect(0,H*0.32,W,H*0.68);
-  cx.strokeStyle='rgba(25,90,15,0.2)';cx.lineWidth=1;
-  for(let x=0;x<W;x+=14){cx.beginPath();cx.moveTo(x,H*0.33);cx.lineTo(x+5,H);cx.stroke();}
-  // Cover indicators
-  if(P1COVER){cx.fillStyle='rgba(0,230,118,0.15)';cx.fillRect(p1x-30,p1y-50,60,60);}
-  if(P2COVER){cx.fillStyle='rgba(0,230,118,0.15)';cx.fillRect(p2x-30,p2y-50,60,60);}
-  // Rocks
-  rocks.forEach(r=>{cx.fillStyle='#3a3a2a';cx.beginPath();cx.ellipse(r.x,r.y,r.w/2,r.h/2,0.2,0,Math.PI*2);cx.fill();cx.fillStyle='#4e4e3c';cx.beginPath();cx.ellipse(r.x-r.w*.1,r.y-r.h*.22,r.w*.28,r.h*.28,0,0,Math.PI*2);cx.fill();});
-  // Depth sort trees and players
-  let objs=[...covTrees.map(t=>({k:'t',y:t.y,d:t}))];
-  if(p1y<=p2y){objs.push({k:'p1',y:p1y});objs.push({k:'p2',y:p2y});}
-  else{objs.push({k:'p2',y:p2y});objs.push({k:'p1',y:p1y});}
-  objs.sort((a,b)=>a.y-b.y);
-  objs.forEach(o=>{
-    if(o.k==='t'){let t=o.d;cx.fillStyle='#3a2000';cx.fillRect(t.x-4,t.y,8,t.r*.9);let cl=t.dark?['#122810','#193a12','#214a18']:['#1a4410','#245c18','#2e7420'];for(let i=2;i>=0;i--){cx.fillStyle=cl[i];cx.beginPath();cx.arc(t.x,t.y-t.r*.3-i*t.r*.24,t.r*(.88-i*.1),0,Math.PI*2);cx.fill();}}
-    else if(o.k==='p1'){let wk=Math.sin(frame*.2)*6;drawSoldier(p1x,p1y,1,'green',wk);}
-    else{let wk=Math.sin(frame*.2+1)*6;drawSoldier(p2x,p2y,-1,'red',wk);}
-  });
-  // HP bars above players
-  function drawBar(px,py,hp,mhp,sh,msh,name,clr){
-    let bw=110,bx=Math.max(10,Math.min(W-bw-10,px-bw/2));
-    let by=py-65;
-    cx.fillStyle='rgba(0,0,0,0.75)';cx.fillRect(bx-2,by-2,bw+4,38);
-    cx.strokeStyle=clr;cx.lineWidth=1.5;cx.strokeRect(bx-2,by-2,bw+4,38);
-    let hc=hp/mhp>.6?'#00e676':hp/mhp>.3?'#ff9100':'#ff1744';
-    cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(bx,by,bw,11);cx.fillStyle=hc;cx.fillRect(bx,by,bw*(hp/mhp),11);
-    cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(bx,by+13,bw,9);cx.fillStyle='#40c4ff';cx.fillRect(bx,by+13,bw*(sh/msh),9);
-    cx.fillStyle=clr;cx.font='bold 10px Bangers,sans-serif';cx.textAlign='center';cx.fillText(name.toUpperCase(),px,by-4);cx.textAlign='left';
-    cx.fillStyle='#ddd';cx.font='8px Rajdhani,sans-serif';cx.textAlign='center';cx.fillText('HP '+hp+'/'+mhp,px,by+9);cx.fillText('🛡️'+sh+'/'+msh,px,by+20);cx.textAlign='left';
-    if((sh===msh?false:false)||true){
-      if(P1COVER&&px===p1x||P2COVER&&px===p2x){
-        cx.fillStyle='rgba(0,230,118,0.9)';cx.font='bold 9px Rajdhani,sans-serif';cx.textAlign='center';cx.fillText('🌲 IN COVER',px,by+30);cx.textAlign='left';
-      }
-    }
-  }
-  drawBar(p1x,p1y,P1HP,P1MHP,P1SH,P1MSH,P1NAME,'#4da6ff');
-  drawBar(p2x,p2y,P2HP,P2MHP,P2SH,P2MSH,P2NAME,'#ff5252');
-  // Cover label on trees
-  cx.fillStyle='rgba(0,230,118,0.85)';cx.font='bold 10px Rajdhani,sans-serif';cx.textAlign='center';
-  cx.fillText('🌲 COVER',colX(2),H*.36);cx.fillText('🌲 COVER',colX(4),H*.36);cx.textAlign='left';
-  // Top HUD
-  cx.fillStyle='rgba(0,0,10,0.78)';cx.fillRect(0,0,W,44);
+function drawHUD(){
+  cx.fillStyle='rgba(0,0,10,0.80)';cx.fillRect(0,0,W,56);
+  // P1 bars (left)
+  let h1=P1HP/P1MHP,hc1=h1>.6?'#00e676':h1>.3?'#ff9100':'#ff1744';
+  cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(10,8,180,13);cx.fillStyle=hc1;cx.fillRect(10,8,180*h1,13);
+  cx.strokeStyle='rgba(77,166,255,0.6)';cx.lineWidth=1;cx.strokeRect(10,8,180,13);
+  cx.fillStyle='#fff';cx.font='bold 9px Rajdhani,sans-serif';cx.fillText('❤️ '+P1HP+'/'+P1MHP,14,18);
+  let s1=P1SH/P1MSH;cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(10,25,180,10);cx.fillStyle='#40c4ff';cx.fillRect(10,25,180*s1,10);
+  cx.strokeStyle='rgba(64,196,255,0.4)';cx.strokeRect(10,25,180,10);
+  cx.fillStyle='#4da6ff';cx.font='bold 11px Bangers,sans-serif';cx.fillText(P1NAME.toUpperCase(),12,46);
+  // VS centre
   let phase=PHASE,turnName=phase.startsWith('p1')?P1NAME:P2NAME;
   let turnClr=phase.startsWith('p1')?'#4da6ff':'#ff5252';
-  let act=phase.endsWith('_move')?'MOVE':'ATTACK';
-  if(WINNER){cx.fillStyle='#FFD100';cx.shadowColor='#FFD100';cx.shadowBlur=18;cx.font='bold 22px Bangers,sans-serif';cx.textAlign='center';cx.fillText('🏆 '+WINNER.toUpperCase()+' WINS! 🏆',W/2,28);cx.shadowBlur=0;}
-  else{cx.fillStyle=turnClr;cx.shadowColor=turnClr;cx.shadowBlur=14;cx.font='bold 20px Bangers,sans-serif';cx.textAlign='center';cx.fillText('⚡ '+turnName.toUpperCase()+' — '+act+' ⚡',W/2,26);cx.shadowBlur=0;}
-  // Column dots (position markers)
+  cx.textAlign='center';
+  if(WINNER){cx.fillStyle='#FFD100';cx.shadowColor='#FFD100';cx.shadowBlur=20;cx.font='bold 24px Bangers,sans-serif';cx.fillText('🏆 '+WINNER.toUpperCase()+' WINS!',W/2,32);cx.shadowBlur=0;}
+  else{cx.fillStyle=turnClr;cx.shadowColor=turnClr;cx.shadowBlur=12;cx.font='bold 22px Bangers,sans-serif';
+    let act=phase.endsWith('_move')?'MOVE':'ATTACK';cx.fillText('⚡ '+turnName.toUpperCase()+' — '+act,W/2,32);cx.shadowBlur=0;}
+  cx.fillStyle='rgba(150,170,210,0.55)';cx.font='9px Rajdhani,sans-serif';cx.fillText('🌲 trees = 50% cover  ·  cols 2 & 4',W/2,47);cx.textAlign='left';
+  // P2 bars (right)
+  let h2=P2HP/P2MHP,hc2=h2>.6?'#00e676':h2>.3?'#ff9100':'#ff1744';
+  cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(W-190,8,180,13);cx.fillStyle=hc2;cx.fillRect(W-190,8,180*h2,13);
+  cx.strokeStyle='rgba(255,82,82,0.6)';cx.strokeRect(W-190,8,180,13);
+  cx.fillStyle='#fff';cx.textAlign='right';cx.font='bold 9px Rajdhani,sans-serif';cx.fillText(P2HP+'/'+P2MHP+' ❤️',W-14,18);
+  let s2=P2SH/P2MSH;cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(W-190,25,180,10);cx.fillStyle='#40c4ff';cx.fillRect(W-190,25,180*s2,10);
+  cx.strokeStyle='rgba(64,196,255,0.4)';cx.strokeRect(W-190,25,180,10);
+  cx.fillStyle='#ff5252';cx.font='bold 11px Bangers,sans-serif';cx.fillText(P2NAME.toUpperCase(),W-12,46);cx.textAlign='left';
+  // Position bar at bottom
+  cx.fillStyle='rgba(0,0,10,0.65)';cx.fillRect(0,H-28,W,28);
   for(let c=0;c<7;c++){
-    let cx2=colX(c);
-    cx.fillStyle=c===P1COL?'#4da6ff':c===P2COL?'#ff5252':c===2||c===4?'#00e676':'rgba(255,255,255,0.15)';
-    cx.beginPath();cx.arc(cx2,H-12,5,0,Math.PI*2);cx.fill();
-    cx.fillStyle='rgba(255,255,255,0.3)';cx.font='8px Rajdhani,sans-serif';cx.textAlign='center';cx.fillText(c,cx2,H-4);cx.textAlign='left';
+    let px=colX(c);
+    let ic=c===P1COL?'#4da6ff':c===P2COL?'#ff5252':c===2||c===4?'#00e676':'rgba(255,255,255,0.18)';
+    cx.fillStyle=ic;cx.beginPath();cx.arc(px,H-14,6,0,Math.PI*2);cx.fill();
+    cx.fillStyle='rgba(255,255,255,0.35)';cx.font='8px Rajdhani,sans-serif';cx.textAlign='center';cx.fillText(c===P1COL?P1NAME.substring(0,4):c===P2COL?P2NAME.substring(0,4):c===2||c===4?'COVER':'',px,H-2);cx.textAlign='left';
   }
-  frame++;requestAnimationFrame(drawAll);
 }
-drawAll();
+function draw(){
+  cx.clearRect(0,0,W,H);drawWorld();
+  rocks.forEach(r=>drawRock(r));
+  // Cover glow behind players in cover
+  if(P1COVER){let cg=cx.createRadialGradient(p1x,GY,0,p1x,GY,55);cg.addColorStop(0,'rgba(0,230,118,0.22)');cg.addColorStop(1,'rgba(0,0,0,0)');cx.fillStyle=cg;cx.fillRect(p1x-55,GY-55,110,110);}
+  if(P2COVER){let cg=cx.createRadialGradient(p2x,GY,0,p2x,GY,55);cg.addColorStop(0,'rgba(0,230,118,0.22)');cg.addColorStop(1,'rgba(0,0,0,0)');cx.fillStyle=cg;cx.fillRect(p2x-55,GY-55,110,110);}
+  // Depth sort
+  let objs=[
+    ...trees.map(t=>({k:'t',y:t.y,d:t})),
+    {k:'p1',y:GY},{k:'p2',y:GY+1}
+  ];
+  objs.sort((a,b)=>a.y-b.y);
+  objs.forEach(o=>{
+    if(o.k==='t')drawTree(o.d);
+    else if(o.k==='p1'){let wk=P1HP>0?Math.sin(frame*.18)*7:0;drawSoldier(p1x,GY,1,'green',wk);}
+    else{let wk=P2HP>0?Math.sin(frame*.18+1.5)*7:0;drawSoldier(p2x,GY,-1,'red',wk);}
+  });
+  // Cover tree labels
+  cx.fillStyle='rgba(0,230,118,0.8)';cx.font='bold 11px Rajdhani,sans-serif';cx.textAlign='center';
+  cx.fillText('🌲 COVER',colX(2),H*0.36);cx.fillText('🌲 COVER',colX(4),H*0.36);cx.textAlign='left';
+  drawHUD();
+  frame++;requestAnimationFrame(draw);
+}
+draw();
 </script></body></html>"""
 
 def build_online_canvas(r):
@@ -921,7 +963,7 @@ elif st.session_state.game_mode=="lobby_sp":
 
 elif st.session_state.game_mode=="sp":
     if st.button("🏠 MENU",key="spmenu"): full_reset(); st.rerun()
-    components.html(build_sp_canvas(st.session_state.sp_name,st.session_state.sp_skin,st.session_state.sp_w1,st.session_state.sp_w2),height=560)
+    components.html(build_sp_canvas(st.session_state.sp_name,st.session_state.sp_skin,st.session_state.sp_w1,st.session_state.sp_w2),height=710)
 
 # ── 2P Same-screen Lobby ──────────────────────────────────────────────────────
 elif st.session_state.game_mode=="lobby_2p_local":
@@ -952,7 +994,7 @@ elif st.session_state.game_mode=="lobby_2p_local":
 elif st.session_state.game_mode=="2p_local":
     if st.button("🏠 MENU",key="2plm"): full_reset(); st.rerun()
     ss=st.session_state
-    components.html(build_2p_canvas(ss.lc_n1,ss.lc_s1,ss.lc_w1a,ss.lc_w1b,ss.lc_n2,ss.lc_s2,ss.lc_w2a,ss.lc_w2b),height=560)
+    components.html(build_2p_canvas(ss.lc_n1,ss.lc_s1,ss.lc_w1a,ss.lc_w1b,ss.lc_n2,ss.lc_s2,ss.lc_w2a,ss.lc_w2b),height=710)
 
 # ── 2P Online Lobby ───────────────────────────────────────────────────────────
 elif st.session_state.game_mode=="lobby_2p_online":
@@ -1006,7 +1048,7 @@ Share this code with your friend. They open the same URL and click "Join Room".<
     else:
         st.info("⏳ Waiting for your friend to join... (auto-checks every 3 seconds)")
         if st.button("🏠 CANCEL",key="cancel_wait"): full_reset(); st.rerun()
-        time.sleep(3)
+        time.sleep(1.5)
         st.rerun()
 
 elif st.session_state.game_mode=="online_game":
@@ -1024,7 +1066,7 @@ elif st.session_state.game_mode=="online_game":
         opp_name=r["p2_name"] if role=="p1" else r["p1_name"]
         my_color="#4da6ff" if role=="p1" else "#ff5252"
         # Canvas arena view
-        components.html(build_online_canvas(r), height=375)
+        components.html(build_online_canvas(r), height=585)
         c1,c2=st.columns(2)
         with c1: hp_row(n1,s1,r["p1_hp"] or 0,r["p1_sh"] or 0,SKINS[s1]["health"],SKINS[s1]["shields"],SKINS[s1]["color"])
         with c2: hp_row(n2,s2,r["p2_hp"] or 0,r["p2_sh"] or 0,SKINS[s2]["health"],SKINS[s2]["shields"],SKINS[s2]["color"])
