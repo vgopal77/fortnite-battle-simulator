@@ -580,7 +580,7 @@ window.addEventListener('keyup',e=>{keys[e.code]=false;});
 cvs.addEventListener('click',()=>{if(!gameOver&&!showResult)shoot();});
 cvs.setAttribute('tabindex','0');cvs.focus();
 spawnWave(1);loop();
-(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});b.textContent='✕';}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){b.textContent=document.fullscreenElement?'✕':'⛶';});document.body.appendChild(b);})();
+(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';var cv=document.getElementById('g');b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){if(document.fullscreenElement){var cw=cv.width,ch=cv.height,s=Math.min(window.innerWidth/cw,window.innerHeight/ch);cv.style.position='fixed';cv.style.left=Math.round((window.innerWidth-cw*s)/2)+'px';cv.style.top=Math.round((window.innerHeight-ch*s)/2)+'px';cv.style.transform='scale('+s+')';cv.style.transformOrigin='0 0';document.body.style.background='#000';b.textContent='✕';}else{cv.style.position='';cv.style.left='';cv.style.top='';cv.style.transform='';cv.style.transformOrigin='';b.textContent='⛶';}});document.body.appendChild(b);})();
 </script></body></html>"""
 
 # ── 2-Player same-screen canvas HTML ─────────────────────────────────────────
@@ -772,7 +772,7 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
 cvs.setAttribute('tabindex','0');cvs.focus();
 loop();
-(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});b.textContent='✕';}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){b.textContent=document.fullscreenElement?'✕':'⛶';});document.body.appendChild(b);})();
+(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';var cv=document.getElementById('g');b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){if(document.fullscreenElement){var cw=cv.width,ch=cv.height,s=Math.min(window.innerWidth/cw,window.innerHeight/ch);cv.style.position='fixed';cv.style.left=Math.round((window.innerWidth-cw*s)/2)+'px';cv.style.top=Math.round((window.innerHeight-ch*s)/2)+'px';cv.style.transform='scale('+s+')';cv.style.transformOrigin='0 0';document.body.style.background='#000';b.textContent='✕';}else{cv.style.position='';cv.style.left='';cv.style.top='';cv.style.transform='';cv.style.transformOrigin='';b.textContent='⛶';}});document.body.appendChild(b);})();
 </script></body></html>"""
 
 # ── Canvas builders ───────────────────────────────────────────────────────────
@@ -913,7 +913,7 @@ function draw(){
   frame++;requestAnimationFrame(draw);
 }
 draw();
-(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});b.textContent='✕';}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){b.textContent=document.fullscreenElement?'✕':'⛶';});document.body.appendChild(b);})();
+(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';var cv=document.getElementById('g');b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){if(document.fullscreenElement){var cw=cv.width,ch=cv.height,s=Math.min(window.innerWidth/cw,window.innerHeight/ch);cv.style.position='fixed';cv.style.left=Math.round((window.innerWidth-cw*s)/2)+'px';cv.style.top=Math.round((window.innerHeight-ch*s)/2)+'px';cv.style.transform='scale('+s+')';cv.style.transformOrigin='0 0';document.body.style.background='#000';b.textContent='✕';}else{cv.style.position='';cv.style.left='';cv.style.top='';cv.style.transform='';cv.style.transformOrigin='';b.textContent='⛶';}});document.body.appendChild(b);})();
 </script></body></html>"""
 
 def build_online_canvas(r):
@@ -1059,7 +1059,7 @@ function draw(){
 window.addEventListener('keydown',e=>{keys[e.code]=true;e.preventDefault();});
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
 cvs.setAttribute('tabindex','0');cvs.focus();draw();
-(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});b.textContent='✕';}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){b.textContent=document.fullscreenElement?'✕':'⛶';});document.body.appendChild(b);})();
+(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';var cv=document.getElementById('g');b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){if(document.fullscreenElement){var cw=cv.width,ch=cv.height,s=Math.min(window.innerWidth/cw,window.innerHeight/ch);cv.style.position='fixed';cv.style.left=Math.round((window.innerWidth-cw*s)/2)+'px';cv.style.top=Math.round((window.innerHeight-ch*s)/2)+'px';cv.style.transform='scale('+s+')';cv.style.transformOrigin='0 0';document.body.style.background='#000';b.textContent='✕';}else{cv.style.position='';cv.style.left='';cv.style.top='';cv.style.transform='';cv.style.transformOrigin='';b.textContent='⛶';}});document.body.appendChild(b);})();
 </script></body></html>"""
 
 # ── Game 5: Storm Sprint (endless side-scroll runner) ────────────────────────
@@ -1183,7 +1183,7 @@ function draw(){
 window.addEventListener('keydown',e=>{if(['Space','ArrowUp','KeyW'].includes(e.code))e.preventDefault();keys[e.code]=true;});
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
 cvs.setAttribute('tabindex','0');cvs.focus();draw();
-(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});b.textContent='✕';}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){b.textContent=document.fullscreenElement?'✕':'⛶';});document.body.appendChild(b);})();
+(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';var cv=document.getElementById('g');b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){if(document.fullscreenElement){var cw=cv.width,ch=cv.height,s=Math.min(window.innerWidth/cw,window.innerHeight/ch);cv.style.position='fixed';cv.style.left=Math.round((window.innerWidth-cw*s)/2)+'px';cv.style.top=Math.round((window.innerHeight-ch*s)/2)+'px';cv.style.transform='scale('+s+')';cv.style.transformOrigin='0 0';document.body.style.background='#000';b.textContent='✕';}else{cv.style.position='';cv.style.left='';cv.style.top='';cv.style.transform='';cv.style.transformOrigin='';b.textContent='⛶';}});document.body.appendChild(b);})();
 </script></body></html>"""
 
 # ── Game 6: Target Blitz (click targets arcade) ──────────────────────────────
@@ -1289,7 +1289,7 @@ function draw(){
   requestAnimationFrame(draw);
 }
 cvs.setAttribute('tabindex','0');cvs.focus();draw();
-(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});b.textContent='✕';}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){b.textContent=document.fullscreenElement?'✕':'⛶';});document.body.appendChild(b);})();
+(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';var cv=document.getElementById('g');b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){if(document.fullscreenElement){var cw=cv.width,ch=cv.height,s=Math.min(window.innerWidth/cw,window.innerHeight/ch);cv.style.position='fixed';cv.style.left=Math.round((window.innerWidth-cw*s)/2)+'px';cv.style.top=Math.round((window.innerHeight-ch*s)/2)+'px';cv.style.transform='scale('+s+')';cv.style.transformOrigin='0 0';document.body.style.background='#000';b.textContent='✕';}else{cv.style.position='';cv.style.left='';cv.style.top='';cv.style.transform='';cv.style.transformOrigin='';b.textContent='⛶';}});document.body.appendChild(b);})();
 </script></body></html>"""
 
 # ── Game 7: Zone Wars (top-down 2D battle royale vs AI) ──────────────────────
@@ -1431,7 +1431,7 @@ cvs.addEventListener('mousemove',e=>{let rect=cvs.getBoundingClientRect();mx=(e.
 cvs.addEventListener('click',e=>{let rect=cvs.getBoundingClientRect();mx=(e.clientX-rect.left)*(W/rect.width);my=(e.clientY-rect.top)*(H/rect.height);if(!gameOver&&fireCd<=0){shoot(p,mx,my,35,'#FFD100','p');fireCd=14;}});
 window.addEventListener('keydown',e=>{keys[e.code]=true;});window.addEventListener('keyup',e=>{keys[e.code]=false;});
 cvs.setAttribute('tabindex','0');cvs.focus();draw();
-(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});b.textContent='✕';}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){b.textContent=document.fullscreenElement?'✕':'⛶';});document.body.appendChild(b);})();
+(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';var cv=document.getElementById('g');b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){if(document.fullscreenElement){var cw=cv.width,ch=cv.height,s=Math.min(window.innerWidth/cw,window.innerHeight/ch);cv.style.position='fixed';cv.style.left=Math.round((window.innerWidth-cw*s)/2)+'px';cv.style.top=Math.round((window.innerHeight-ch*s)/2)+'px';cv.style.transform='scale('+s+')';cv.style.transformOrigin='0 0';document.body.style.background='#000';b.textContent='✕';}else{cv.style.position='';cv.style.left='';cv.style.top='';cv.style.transform='';cv.style.transformOrigin='';b.textContent='⛶';}});document.body.appendChild(b);})();
 </script></body></html>"""
 
 # ── Game 8: Striker FC (FIFA-style soccer) ───────────────────────────────────
@@ -1444,13 +1444,14 @@ const W=cvs.width=Math.min(1100,window.innerWidth-4);const H=cvs.height=560;
 const PX=W*.07,PY=H*.09,PW=W*.86,PH=H*.82,PR=PX+PW,PB=PY+PH,PCX=PX+PW/2,PCY=PY+PH/2;
 const GW=PW*.24,GD=24;
 const ball={x:PCX,y:PCY,vx:0,vy:0,r:11,spin:0};
+const P1_JN='__SC_P1JN__',AI_JN='__SC_AI_JN__',AI_PNAME='__SC_AI_NAME__';
 const p1={x:PCX,y:PCY+PH*.28,vx:0,vy:0,walk:0,hasBall:false,team:'blue',cd:0,name:'__SC_NAME__'};
 const ai={x:PCX,y:PCY-PH*.28,vx:0,vy:0,walk:0,hasBall:false,team:'red',cd:0,ptx:PCX,ptTimer:0};
 const gk={x:PCX,y:PB-30,walk:0,team:'red',cd:0,isGK:true};
 let score={p:0,a:0},timer=180,tFrame=0,phase='play';
 let goalTimer=0,goalTeam='',frame=0,trail=[];
 let keys={},hitFX=[];
-const P1SPD=5.0,AISPD=4.2,GKSPD=5.5,FRIC=0.87,KICK=14,AIKICK=11,POSS=30;
+const P1SPD=__SC_P1SPD__,AISPD=__SC_AI_SPD__,GKSPD=5.5,FRIC=0.87,KICK=__SC_P1KICK__,AIKICK=__SC_AI_KICK__,POSS=30;
 function dst(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
 function drawPitch(){
@@ -1529,7 +1530,7 @@ function drawPlayer(obj){
   cx.fillStyle=team==='blue'?'#2c1a08':'#0d0d0d';
   cx.beginPath();cx.arc(x,y-30,12,Math.PI+.3,-.3);cx.fill();
   cx.fillStyle='#fff';cx.font='bold 10px Arial';cx.textAlign='center';
-  cx.fillText(isGK?'GK':team==='blue'?'10':'7',x,y-1);
+  cx.fillText(isGK?'GK':team==='blue'?P1_JN:AI_JN,x,y-1);
   if(hasBall){cx.strokeStyle='#FFD100';cx.lineWidth=2.5;cx.setLineDash([4,3]);cx.beginPath();cx.arc(x,y,26,0,Math.PI*2);cx.stroke();cx.setLineDash([]);}
   cx.textAlign='left';
 }
@@ -1552,7 +1553,7 @@ function drawHUD(){
   cx.fillStyle='#64b5f6';cx.font='bold 32px Bangers,sans-serif';cx.fillText(score.p,W*.47,H*.068);
   cx.fillStyle='rgba(255,255,255,.65)';cx.font='bold 22px Bangers,sans-serif';cx.textAlign='center';cx.fillText('—',W*.50,H*.068);
   cx.fillStyle='#ef5350';cx.font='bold 32px Bangers,sans-serif';cx.textAlign='left';cx.fillText(score.a,W*.53,H*.068);
-  cx.fillStyle='#e53935';cx.font='bold 20px Bangers,sans-serif';cx.fillText('🟥 AI FC',W*.565,H*.068);
+  cx.fillStyle='#e53935';cx.font='bold 20px Bangers,sans-serif';cx.fillText('🟥 '+AI_PNAME.toUpperCase(),W*.565,H*.068);
   let mins=Math.floor(timer/60),secs=timer%60;
   let tc=timer<30?'#ff4444':'#FFD100';
   cx.fillStyle=tc;cx.font='bold 20px Bangers,sans-serif';cx.textAlign='center';
@@ -1648,13 +1649,13 @@ function draw(){
     cx.textAlign='center';cx.fillStyle='#FFD100';cx.shadowColor='#FFD100';cx.shadowBlur=35;
     cx.font='bold 78px Bangers,sans-serif';cx.fillText('⚽ GOAL!',W/2,H*.42);cx.shadowBlur=0;
     cx.fillStyle='#fff';cx.font='bold 26px Rajdhani,sans-serif';
-    cx.fillText(goalTeam==='p'?p1.name.toUpperCase()+' SCORES! 🎉':'AI FC SCORES! 🤖',W/2,H*.56);
+    cx.fillText(goalTeam==='p'?p1.name.toUpperCase()+' SCORES! 🎉':AI_PNAME.toUpperCase()+' SCORES! 🤖',W/2,H*.56);
     cx.textAlign='left';
     if(goalTimer<=0){phase=timer>0?'play':'end';}
   }
   if(phase==='end'){
     cx.fillStyle='rgba(0,0,20,.88)';cx.fillRect(0,0,W,H);
-    let w=score.p>score.a?'🏆 '+p1.name.toUpperCase()+' WINS!':score.a>score.p?'🤖 AI FC WINS!':'🤝 IT\'S A DRAW!';
+    let w=score.p>score.a?'🏆 '+p1.name.toUpperCase()+' WINS!':score.a>score.p?'🏆 '+AI_PNAME.toUpperCase()+' WINS!':'🤝 IT\'S A DRAW!';
     let wc=score.p>score.a?'#4da6ff':score.a>score.p?'#ff5252':'#FFD100';
     cx.fillStyle=wc;cx.shadowColor=wc;cx.shadowBlur=28;cx.font='bold 62px Bangers,sans-serif';cx.textAlign='center';
     cx.fillText(w,W/2,H*.42);cx.shadowBlur=0;
@@ -1670,7 +1671,7 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyR'&&phase==='end'){score={p:0,a:0};timer=180;tFrame=0;phase='play';resetKickoff();}
 });
 document.addEventListener('keyup',e=>{keys[e.code]=false;});
-(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});b.textContent='✕';}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){b.textContent=document.fullscreenElement?'✕':'⛶';});document.body.appendChild(b);})();
+(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';var cv=document.getElementById('g');b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){if(document.fullscreenElement){var cw=cv.width,ch=cv.height,s=Math.min(window.innerWidth/cw,window.innerHeight/ch);cv.style.position='fixed';cv.style.left=Math.round((window.innerWidth-cw*s)/2)+'px';cv.style.top=Math.round((window.innerHeight-ch*s)/2)+'px';cv.style.transform='scale('+s+')';cv.style.transformOrigin='0 0';document.body.style.background='#000';b.textContent='✕';}else{cv.style.position='';cv.style.left='';cv.style.top='';cv.style.transform='';cv.style.transformOrigin='';b.textContent='⛶';}});document.body.appendChild(b);})();
 draw();
 </script></body></html>"""
 
@@ -2181,33 +2182,88 @@ elif st.session_state.game_mode=="zone_game":
 
 # ── Striker FC ────────────────────────────────────────────────────────────────
 elif st.session_state.game_mode=="lobby_soccer":
-    st.markdown("### ⚽ STRIKER FC — FC 26 STYLE")
-    st.info("Realistic soccer vs AI + goalkeeper. 3-minute match. You play BLUE (#10), AI is RED (#7) with a goalkeeper. Attack the TOP goal, defend the bottom. SPACE to kick, SHIFT to sprint!")
-    c1,c2=st.columns([1,2])
-    with c1:
-        nm=st.text_input("Your Name",value="",placeholder="Enter name",key="sc_nm",max_chars=14)
+    _SC_PLAYERS = {
+        "Messi":       {"jersey":"10","speed":5.3,"kick":13.5,"flag":"🇦🇷","rating":99,"trait":"Dribble King"},
+        "Ronaldo":     {"jersey":"7", "speed":4.9,"kick":15.5,"flag":"🇵🇹","rating":98,"trait":"Power Shot"},
+        "Neymar":      {"jersey":"10","speed":5.1,"kick":13.0,"flag":"🇧🇷","rating":95,"trait":"Tricky Feet"},
+        "Mbappé":      {"jersey":"9", "speed":5.8,"kick":14.0,"flag":"🇫🇷","rating":97,"trait":"Pace Monster"},
+        "Haaland":     {"jersey":"9", "speed":4.8,"kick":16.5,"flag":"🇳🇴","rating":96,"trait":"Clinical"},
+        "Bellingham":  {"jersey":"5", "speed":4.7,"kick":13.5,"flag":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","rating":94,"trait":"All-Round"},
+        "Vinicius Jr": {"jersey":"7", "speed":5.5,"kick":12.5,"flag":"🇧🇷","rating":95,"trait":"Speed Wing"},
+        "Lewandowski": {"jersey":"9", "speed":4.5,"kick":15.5,"flag":"🇵🇱","rating":93,"trait":"Poacher"},
+        "Salah":       {"jersey":"11","speed":5.2,"kick":14.0,"flag":"🇪🇬","rating":93,"trait":"Direct"},
+        "De Bruyne":   {"jersey":"17","speed":4.6,"kick":14.5,"flag":"🇧🇪","rating":94,"trait":"Playmaker"},
+    }
+    _sc_names = list(_SC_PLAYERS.keys())
+    if "sc_p1" not in st.session_state: st.session_state.sc_p1 = "Messi"
+    if "sc_ai" not in st.session_state: st.session_state.sc_ai = "Ronaldo"
+    st.markdown("### ⚽ STRIKER FC — PICK YOUR PLAYER")
+    st.markdown('<div style="font-family:Bangers,sans-serif;font-size:13px;letter-spacing:3px;color:#40c4ff;margin-bottom:6px;">TOP 10 WORLD PLAYERS</div>',unsafe_allow_html=True)
+    lc,rc=st.columns(2)
+    for side_col,side_key,side_label,sel_col,bdr_sel in [
+        (lc,"sc_p1","🟦 YOUR PLAYER","#1565c0","#4da6ff"),
+        (rc,"sc_ai","🟥 AI OPPONENT","#b71c1c","#ff5252"),
+    ]:
+        with side_col:
+            st.markdown(f'<div style="font-family:Bangers,sans-serif;font-size:16px;letter-spacing:2px;color:{bdr_sel};margin-bottom:8px;">{side_label}</div>',unsafe_allow_html=True)
+            rows=[_sc_names[:5],_sc_names[5:]]
+            for row in rows:
+                rcols=st.columns(5)
+                for rcol,pname in zip(rcols,row):
+                    p=_SC_PLAYERS[pname]
+                    sel=st.session_state[side_key]==pname
+                    bg=f"linear-gradient(135deg,{sel_col},{sel_col}cc)" if sel else "rgba(5,10,40,.9)"
+                    bdr=bdr_sel if sel else "rgba(255,255,255,.12)"
+                    with rcol:
+                        st.markdown(f"""<div style="background:{bg};border:2px solid {bdr};border-radius:9px;padding:6px 3px;text-align:center;min-height:80px;">
+<div style="font-size:22px;line-height:1.1;">{p['flag']}</div>
+<div style="font-family:Bangers,sans-serif;font-size:10px;color:{'#fff' if sel else bdr_sel};letter-spacing:1px;">{pname.upper()}</div>
+<div style="font-size:8px;color:{'#eee' if sel else '#667799'};margin-top:2px;">#{p['jersey']} ⭐{p['rating']}</div>
+<div style="font-size:7.5px;color:{'#ffe082' if sel else '#445566'};">{p['trait']}</div></div>""",unsafe_allow_html=True)
+                        if st.button("✓" if sel else "Pick",key=f"{side_key}_{pname}",use_container_width=True):
+                            st.session_state[side_key]=pname; st.rerun()
+    st.markdown("---")
+    p1d=_SC_PLAYERS[st.session_state.sc_p1]; aid=_SC_PLAYERS[st.session_state.sc_ai]
+    mu1,mu2,mu3=st.columns([2,2,1])
+    with mu1:
+        st.markdown(f"""**{p1d['flag']} {st.session_state.sc_p1}** #{p1d['jersey']} ⭐{p1d['rating']}
+| Stat | Value |
+|------|-------|
+| 💨 Speed | {'●'*round(p1d['speed']-.5)+('○'*(5-round(p1d['speed']-.5)))} |
+| 🦵 Power | {'●'*round(p1d['kick']/3.5)+('○'*(5-round(p1d['kick']/3.5)))} |
+| ✨ Trait | {p1d['trait']} |""")
+    with mu2:
+        st.markdown(f"""**{aid['flag']} {st.session_state.sc_ai}** #{aid['jersey']} ⭐{aid['rating']}
+| Stat | Value |
+|------|-------|
+| 💨 Speed | {'●'*round(aid['speed']-.5)+('○'*(5-round(aid['speed']-.5)))} |
+| 🦵 Power | {'●'*round(aid['kick']/3.5)+('○'*(5-round(aid['kick']/3.5)))} |
+| ✨ Trait | {aid['trait']} |""")
+    with mu3:
+        st.markdown("**⚽ Controls**")
+        st.markdown("`WASD` Move · `SPACE` Kick · `SHIFT` Sprint · `R` Replay")
         if st.button("⚽ KICK OFF!",type="primary",use_container_width=True,key="sc_start"):
-            st.session_state["soccer_name"]=nm or "Player"
+            st.session_state["soccer_p1"]=st.session_state.sc_p1
+            st.session_state["soccer_ai"]=st.session_state.sc_ai
+            st.session_state["soccer_p1d"]=p1d
+            st.session_state["soccer_aid"]=aid
             st.session_state.game_mode="soccer_game"; st.rerun()
         if st.button("🏠 MENU",key="sc_back"): full_reset(); st.rerun()
-    with c2:
-        st.markdown("""
-| Control | Action |
-|---------|--------|
-| `WASD` / Arrow keys | Move player |
-| `SPACE` | Kick ball toward goal |
-| `SHIFT` + WASD | Sprint (faster) |
-| `R` (end screen) | Play again |
-
-**⚽ Tips:**
-- Get close to the ball first, then SPACE to kick
-- AI has a goalkeeper defending the bottom goal
-- Sprint past defenders with SHIFT
-- Watch the timer — game ends at 0:00
-""")
 
 elif st.session_state.game_mode=="soccer_game":
-    nm=st.session_state.get("soccer_name","Player")
-    html=_SOCCER_HTML.replace("__SC_NAME__",nm.replace('"',''))
-    components.html(html,height=580)
+    p1n=st.session_state.get("soccer_p1","Messi")
+    ain=st.session_state.get("soccer_ai","Ronaldo")
+    p1d=st.session_state.get("soccer_p1d",{"jersey":"10","speed":5.3,"kick":13.5})
+    aid=st.session_state.get("soccer_aid",{"jersey":"7","speed":4.9,"kick":15.5})
+    html=(_SOCCER_HTML
+        .replace("__SC_NAME__",p1n.replace('"',''))
+        .replace("__SC_AI_NAME__",ain.replace('"',''))
+        .replace("__SC_P1JN__",str(p1d["jersey"]))
+        .replace("__SC_AI_JN__",str(aid["jersey"]))
+        .replace("__SC_P1SPD__",str(round(p1d["speed"],2)))
+        .replace("__SC_AI_SPD__",str(round(aid["speed"],2)))
+        .replace("__SC_P1KICK__",str(round(p1d["kick"],1)))
+        .replace("__SC_AI_KICK__",str(round(aid["kick"],1)))
+    )
+    components.html(html,height=590)
     if st.button("🏠 BACK TO MENU",key="sc_quit"): full_reset(); st.rerun()
