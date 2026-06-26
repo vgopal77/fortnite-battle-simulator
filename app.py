@@ -1816,11 +1816,12 @@ button[data-testid="baseButton-primary"]:hover{background:linear-gradient(135deg
 /* Blue secondary buttons */
 button[data-testid="baseButton-secondary"]{background:rgba(5,15,50,.8)!important;color:#40c4ff!important;font-family:'Bangers',sans-serif!important;letter-spacing:2px!important;border:1px solid rgba(64,196,255,.35)!important;border-radius:8px!important;}
 button[data-testid="baseButton-secondary"]:hover{background:rgba(20,50,120,.8)!important;border-color:#40c4ff!important;}
-/* Fullscreen button */
+/* Fullscreen button — hidden automatically when in fullscreen, ESC exits natively */
 #_fsbtn{position:fixed;top:10px;right:14px;z-index:2147483647;background:rgba(3,8,28,.92);color:#40c4ff;border:1.5px solid rgba(64,196,255,.45);border-radius:8px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:sans-serif;letter-spacing:1px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 #_fsbtn:hover{background:rgba(10,25,80,.95);border-color:#40c4ff;}
+:fullscreen #_fsbtn,:-webkit-full-screen #_fsbtn,:-moz-full-screen #_fsbtn{display:none!important;}
 </style>
-<button id="_fsbtn" onclick="(function(b){if(!document.fullscreenElement){document.documentElement.requestFullscreen().then(function(){b.innerHTML='&#x2715; EXIT FULL';}).catch(function(e){alert('Fullscreen not supported: '+e.message);});}else{document.exitFullscreen().then(function(){b.innerHTML='&#x26f6; FULLSCREEN';});}document.addEventListener('fullscreenchange',function(){b.innerHTML=document.fullscreenElement?'&#x2715; EXIT FULL':'&#x26f6; FULLSCREEN';},{once:false});}).call(this,this);">&#x26f6; FULLSCREEN</button>
+<button id="_fsbtn" onclick="var e=document.documentElement;(e.requestFullscreen||e.webkitRequestFullscreen||e.mozRequestFullScreen).call(e);">&#x26f6; FULLSCREEN</button>
 """, unsafe_allow_html=True)
 st.markdown("""<div style="text-align:center;padding:18px 0 6px;">
 <div style="font-family:'Bangers',sans-serif;font-size:52px;letter-spacing:10px;color:#fff;
