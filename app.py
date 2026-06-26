@@ -1799,11 +1799,28 @@ def full_reset():
 # MAIN LAYOUT
 # ══════════════════════════════════════════════════════════════════════════════
 init_state()
-st.markdown("""<div style="text-align:center;padding:6px 0 2px;">
-<div style="font-family:'Bangers',sans-serif;font-size:40px;letter-spacing:7px;color:#fff;
-text-shadow:-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000,3px 3px 0 #000,
-0 0 26px rgba(255,209,0,.9);">💥 FORTNITE BATTLE SIMULATOR</div></div>""", unsafe_allow_html=True)
-st.markdown("---")
+st.markdown("""<style>
+div[data-testid="stAppViewContainer"]{background:linear-gradient(160deg,#050d2a 0%,#091535 60%,#0a1a40 100%)!important;}
+div[data-testid="stHeader"]{background:transparent!important;}
+section[data-testid="stSidebar"]{display:none!important;}
+div[data-testid="stToolbar"]{display:none!important;}
+.block-container{padding-top:1rem!important;padding-bottom:1rem!important;max-width:1200px!important;}
+button[data-testid="baseButton-primary"]{background:linear-gradient(135deg,#e6a800,#FFD100)!important;color:#050a1a!important;font-family:'Bangers',sans-serif!important;letter-spacing:3px!important;font-size:15px!important;border:none!important;border-radius:8px!important;}
+button[data-testid="baseButton-primary"]:hover{background:linear-gradient(135deg,#FFD100,#ffe55c)!important;transform:scale(1.03)!important;}
+button[data-testid="baseButton-secondary"]{background:rgba(5,15,50,.8)!important;color:#40c4ff!important;font-family:'Bangers',sans-serif!important;letter-spacing:2px!important;border:1px solid rgba(64,196,255,.35)!important;border-radius:8px!important;}
+button[data-testid="baseButton-secondary"]:hover{background:rgba(20,50,120,.8)!important;border-color:#40c4ff!important;}
+</style>""", unsafe_allow_html=True)
+# Page fullscreen button
+st.components.v1.html("""<div style="position:fixed;top:10px;right:14px;z-index:99999;">
+<button onclick="(function(){if(!document.fullscreenElement){window.parent.document.documentElement.requestFullscreen().catch(function(){});}else{window.parent.document.exitFullscreen();}window.parent.document.addEventListener('fullscreenchange',function(){});})();"
+style="background:rgba(5,12,40,.85);color:#40c4ff;border:1.5px solid rgba(64,196,255,.4);border-radius:8px;padding:7px 14px;font-size:15px;cursor:pointer;font-family:sans-serif;letter-spacing:1px;" title="Toggle Fullscreen">⛶ FULLSCREEN</button></div>""", height=50)
+st.markdown("""<div style="text-align:center;padding:18px 0 6px;">
+<div style="font-family:'Bangers',sans-serif;font-size:46px;letter-spacing:8px;color:#fff;
+text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,
+0 0 40px rgba(255,209,0,.8),0 0 80px rgba(255,100,0,.3);">💥 FORTNITE BATTLE SIMULATOR</div>
+<div style="font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:5px;color:rgba(150,180,255,.55);margin-top:4px;">BATTLE · SURVIVE · WIN</div>
+</div>""", unsafe_allow_html=True)
+st.markdown('<div style="border:none;border-top:1px solid rgba(64,196,255,.18);margin:4px 0 18px;"></div>',unsafe_allow_html=True)
 
 LOG_C={"hit":"#00e676","crit":"#FFD100","miss":"#6688aa","ability":"#ff4da6","win":"#FF5722","lose":"#ff1744"}
 
@@ -1811,51 +1828,70 @@ LOG_C={"hit":"#00e676","crit":"#FFD100","miss":"#6688aa","ability":"#ff4da6","wi
 # MAIN MENU
 # ════════════════════════════════════
 if st.session_state.game_mode is None:
-    st.markdown('<div style="font-family:\'Bangers\',sans-serif;font-size:16px;letter-spacing:4px;color:#aabbdd;text-align:center;margin-bottom:8px;">CLASSIC MODES</div>',unsafe_allow_html=True)
-    mc1,mc2,mc3=st.columns(3)
-    for col,icon,title,desc,mode in [
-        (mc1,"🏰","DEFEND THE KINGDOM","Solo vs AI waves. Storm + pickups + boss charge!","lobby_sp"),
-        (mc2,"🖥️","2-PLAYER SAME SCREEN","Same PC. Storm closes in. Jump to dodge bullets!","lobby_2p_local"),
-        (mc3,"🌐","2-PLAYER ONLINE","Different computers. BUILD · MEDKIT · Storm columns!","lobby_2p_online"),
+    # ── Classic Modes ─────────────────────────────────────────────────────────
+    st.markdown("""<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+<div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,200,0,.4));"></div>
+<div style="font-family:'Bangers',sans-serif;font-size:18px;letter-spacing:6px;color:#FFD100;">CLASSIC MODES</div>
+<div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(255,200,0,.4),transparent);"></div>
+</div>""", unsafe_allow_html=True)
+    mc1,mc2,mc3=st.columns(3,gap="medium")
+    for col,icon,title,desc,mode,badge in [
+        (mc1,"🏰","DEFEND THE KINGDOM","Solo vs 7 waves of AI enemies. Storm closes in, boss charges, supply drops!","lobby_sp","SOLO"),
+        (mc2,"🖥️","2-PLAYER SAME SCREEN","Two players, one PC. Storm closes in. Jump to dodge bullets! Shields + medkits!","lobby_2p_local","2P LOCAL"),
+        (mc3,"🌐","2-PLAYER ONLINE","Different computers. Real-time online battle. BUILD cover · MEDKIT · Storm!","lobby_2p_online","2P ONLINE"),
     ]:
         with col:
-            st.markdown(f"""<div style="background:rgba(5,10,40,.85);border:2px solid rgba(255,200,0,.3);border-radius:12px;padding:14px;text-align:center;min-height:118px;">
-<div style="font-size:36px;">{icon}</div>
-<div style="font-family:'Bangers',sans-serif;font-size:18px;letter-spacing:3px;color:#FFD100;">{title}</div>
-<div style="font-size:10px;color:#aabbdd;margin-top:4px;">{desc}</div></div>""",unsafe_allow_html=True)
-            if st.button("PLAY",key=f"m_{mode}",use_container_width=True,type="primary"):
+            st.markdown(f"""<div style="background:linear-gradient(160deg,rgba(8,16,55,.95),rgba(5,10,38,.98));border:2px solid rgba(255,200,0,.35);border-radius:14px;padding:20px 16px 14px;text-align:center;height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;box-shadow:0 4px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);">
+<div style="position:absolute;top:10px;right:12px;background:rgba(255,200,0,.18);border:1px solid rgba(255,200,0,.4);border-radius:4px;padding:2px 7px;font-family:'Bangers',sans-serif;font-size:9px;letter-spacing:2px;color:#FFD100;">{badge}</div>
+<div style="font-size:40px;margin-bottom:6px;">{icon}</div>
+<div style="font-family:'Bangers',sans-serif;font-size:17px;letter-spacing:3px;color:#FFD100;margin-bottom:6px;">{title}</div>
+<div style="font-size:9.5px;color:rgba(180,200,240,.7);line-height:1.5;">{desc}</div>
+</div>""", unsafe_allow_html=True)
+            if st.button("▶  PLAY",key=f"m_{mode}",use_container_width=True,type="primary"):
                 st.session_state.game_mode=mode; st.rerun()
-    st.markdown('<div style="font-family:\'Bangers\',sans-serif;font-size:16px;letter-spacing:4px;color:#aabbdd;text-align:center;margin:12px 0 8px;">BONUS GAMES</div>',unsafe_allow_html=True)
-    bg1,bg2,bg3,bg4,bg5=st.columns(5)
+    # ── Bonus Games ───────────────────────────────────────────────────────────
+    st.markdown("""<div style="display:flex;align-items:center;gap:14px;margin:22px 0 14px;">
+<div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(64,196,255,.35));"></div>
+<div style="font-family:'Bangers',sans-serif;font-size:18px;letter-spacing:6px;color:#40c4ff;">BONUS GAMES</div>
+<div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(64,196,255,.35),transparent);"></div>
+</div>""", unsafe_allow_html=True)
+    bg1,bg2,bg3,bg4,bg5=st.columns(5,gap="small")
     for col,icon,title,desc,mode in [
-        (bg1,"🎯","SNIPER SHOWDOWN","2P timing duel. Stop your scope at center to deal damage. 5 HP each!","lobby_sniper"),
-        (bg2,"🏃","STORM SPRINT","Endless runner! Double-jump obstacles, grab loot & outrun the storm!","lobby_sprint"),
-        (bg3,"🎯","TARGET BLITZ","Click bullseye targets. Combo multipliers. 60 seconds. Aim for LEGENDARY!","lobby_blitz"),
-        (bg4,"🗺️","ZONE WARS","Top-down survival. WASD + mouse aim. 4 AI enemies. Storm closes in!","lobby_zone"),
-        (bg5,"⚽","STRIKER FC","FC 26-style! Realistic soccer vs AI + goalkeeper. 3-min match. Score goals!","lobby_soccer"),
+        (bg1,"🎯","SNIPER\nSHOWDOWN","2P timing duel. Hit when scope centers. 5 HP each!","lobby_sniper"),
+        (bg2,"🏃","STORM\nSPRINT","Endless runner! Double-jump & outrun the storm!","lobby_sprint"),
+        (bg3,"🎯","TARGET\nBLITZ","Click bullseyes. Build combos. 60 sec. Go LEGENDARY!","lobby_blitz"),
+        (bg4,"🗺️","ZONE\nWARS","Top-down. WASD + mouse. 4 AI enemies. Storm in!","lobby_zone"),
+        (bg5,"⚽","STRIKER\nFC","FC 26-style soccer! Pick Messi or Ronaldo. Score!","lobby_soccer"),
     ]:
         with col:
-            st.markdown(f"""<div style="background:rgba(5,10,40,.85);border:2px solid rgba(0,200,255,.25);border-radius:12px;padding:12px;text-align:center;height:138px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;">
-<div style="font-size:30px;line-height:1.1;">{icon}</div>
-<div style="font-family:'Bangers',sans-serif;font-size:15px;letter-spacing:2px;color:#40c4ff;margin:4px 0 2px;">{title}</div>
-<div style="font-size:9px;color:#8899bb;line-height:1.35;overflow:hidden;">{desc}</div></div>""",unsafe_allow_html=True)
+            t_lines=title.split('\n')
+            t_html=f'<span style="display:block;line-height:1.1;">{t_lines[0]}</span><span style="display:block;line-height:1.1;">{t_lines[1]}</span>'
+            st.markdown(f"""<div style="background:linear-gradient(160deg,rgba(6,12,45,.95),rgba(4,8,35,.98));border:2px solid rgba(64,196,255,.25);border-radius:12px;padding:14px 8px 10px;text-align:center;height:148px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;box-shadow:0 4px 18px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04);">
+<div style="font-size:28px;margin-bottom:5px;">{icon}</div>
+<div style="font-family:'Bangers',sans-serif;font-size:13px;letter-spacing:2px;color:#40c4ff;margin-bottom:5px;">{t_html}</div>
+<div style="font-size:8.5px;color:rgba(140,165,210,.65);line-height:1.45;overflow:hidden;">{desc}</div>
+</div>""", unsafe_allow_html=True)
             if st.button("PLAY",key=f"m_{mode}",use_container_width=True):
                 st.session_state.game_mode=mode; st.rerun()
+    # ── Controls footer ───────────────────────────────────────────────────────
+    st.markdown('<div style="border-top:1px solid rgba(64,196,255,.12);margin:20px 0 8px;"></div>',unsafe_allow_html=True)
     with st.expander("📖 Controls & Tips",expanded=False):
         st.markdown("""
-**🏰 Defend the Kingdom:** WASD=Walk · F/Space=Shoot · 1/2=Gun · Storm closes each wave!
+**🏰 Defend the Kingdom:** `WASD` Move · `F`/`Space` Shoot · `1`/`2` Switch gun · Storm closes every wave
 
-**🖥️ 2P Same Screen:** P1=WASD+F+Q(jump) · P2=Arrows+L+/(jump) · Jump to dodge bullets!
+**🖥️ 2P Same Screen:** P1 `WASD`+`F`+`Q` jump · P2 `Arrows`+`L`+`/` jump · Aerial dodge when jumping!
 
-**🌐 2P Online:** Turn-based · BUILD to get cover · MEDKIT heals 70 HP · Storm hits cols after turn 6
+**🌐 2P Online:** Click enemy to shoot · `💊 MEDKIT` heals 70 HP · `🏗️ BUILD` for cover · Storm after turn 6
 
-**🎯 Sniper Showdown:** P1=SPACE · P2=ENTER · Hit when crosshair is centered · Headshot = 3 damage!
+**🎯 Sniper Showdown:** `Space` (P1) · `Enter` (P2) · Fire when crosshair is centred · Headshot = 3 damage
 
-**🏃 Storm Sprint:** SPACE/W/↑=Jump · Double-jump available · Outrun the purple storm wall!
+**🏃 Storm Sprint:** `Space`/`W`/`↑` Jump (double-jump!) · Outrun the purple wall · Collect crates for HP
 
-**🎯 Target Blitz:** Click targets before they disappear · Combo multiplier grows with hits!
+**🎯 Target Blitz:** Click targets before they vanish · Chain hits to build combo multiplier
 
-**🗺️ Zone Wars:** WASD=Move · SPACE/F=Shoot · Click to aim · Collect loot · Stay in safe zone!
+**🗺️ Zone Wars:** `WASD` Move · Mouse aim + click to shoot · Collect loot · Stay in safe zone
+
+**⚽ Striker FC:** `WASD`/`Arrows` Move · `Space` Kick · `Shift` Sprint · Pick from 10 real players
 """)
 
 # ── SP Lobby ──────────────────────────────────────────────────────────────────
