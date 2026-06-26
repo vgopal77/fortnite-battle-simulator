@@ -1069,7 +1069,7 @@ const GY=H*.72; // ground y
 const GRAV=0.72,JUMP=-15.5,DJUMP=-12;
 let p={x:W*.18,y:GY,vy:0,hp:3,jumps:0,dead:false,djUsed:false};
 let obstacles=[],loot=[],particles=[],stars=[];
-let scrollSpd=4.8,stormX=W*.07,stormSpd=1.0,frame=0,score=0,gameOver=false,best=0;
+let scrollSpd=4.8,stormX=-80,stormSpd=0.5,frame=0,score=0,gameOver=false,best=0;
 let keys={};
 let bgTrees=Array.from({length:14},(_,i)=>({x:i*(W/13),h:55+Math.random()*80,w:22+Math.random()*20,dark:Math.random()<.5}));
 for(let i=0;i<120;i++)stars.push({x:Math.random()*W,y:Math.random()*GY*.7,r:Math.random()*1.6+.3,b:Math.random()});
@@ -1086,7 +1086,7 @@ function update(){
   if(gameOver)return;
   frame++;score++;
   scrollSpd=Math.min(11,4.8+score*0.0018);
-  stormSpd=Math.min(6.5,1.0+score*0.0014);
+  stormSpd=Math.min(6.0,0.5+score*0.0014);
   stormX+=stormSpd;
   // Player jump physics
   if((keys['Space']||keys['ArrowUp']||keys['KeyW'])){if(jumpBuffer<=0){jump();jumpBuffer=10;}}
@@ -1121,7 +1121,7 @@ function update(){
   // Loot collection
   loot.forEach(lt=>{if(!lt.collected&&Math.hypot(p.x-lt.x,p.y-lt.y)<22){lt.collected=true;p.hp=Math.min(5,lt.type==='hp'?p.hp+1:p.hp);for(let i=0;i<6;i++)particles.push({x:lt.x,y:lt.y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,r:4,c:lt.type==='hp'?'#00e676':'#40c4ff',l:20,ml:20});}});
   // Storm hit
-  if(p.x-W*.18<stormX-W*.07){p.hp--;stormSpd=Math.max(stormSpd,scrollSpd+0.3);for(let i=0;i<5;i++)particles.push({x:p.x,y:p.y-10,vx:(Math.random()-.5)*4,vy:-2,r:3,c:'#aa00ff',l:20,ml:20});if(p.hp<=0)gameOver=true;}
+  if(stormX>=p.x-22){p.hp--;stormSpd=Math.max(stormSpd,scrollSpd+0.3);for(let i=0;i<5;i++)particles.push({x:p.x,y:p.y-10,vx:(Math.random()-.5)*4,vy:-2,r:3,c:'#aa00ff',l:20,ml:20});if(p.hp<=0)gameOver=true;}
   obstacles=obstacles.filter(o=>o.x+150>0);loot=loot.filter(l=>!l.collected&&l.x>-30);
   particles.forEach(pt=>{pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=0.3;pt.l--;});particles=particles.filter(pt=>pt.l>0);
   if(score>best)best=score;
@@ -1155,7 +1155,7 @@ function draw(){
   // Loot boxes
   loot.forEach(lt=>{if(lt.collected)return;let pulse=0.8+0.2*Math.sin(frame*.1+lt.ph);cx.shadowColor=lt.type==='hp'?'#00e676':'#40c4ff';cx.shadowBlur=10*pulse;cx.fillStyle=lt.type==='hp'?'#006632':'#004488';cx.fillRect(lt.x-12,lt.y-12,24,24);cx.fillStyle='#FFD100';cx.fillRect(lt.x-12,lt.y-13,24,4);cx.fillRect(lt.x-1,lt.y-13,2,27);cx.shadowBlur=0;cx.fillStyle='#fff';cx.font='12px sans-serif';cx.textAlign='center';cx.fillText(lt.type==='hp'?'❤️':'🛡️',lt.x,lt.y+5);cx.textAlign='left';});
   // Storm wall
-  let sw=stormX-W*.07+W*.18;
+  let sw=stormX;
   let storm=cx.createLinearGradient(sw-80,0,sw,0);storm.addColorStop(0,'rgba(0,0,0,0)');storm.addColorStop(0.6,'rgba(100,0,180,0.5)');storm.addColorStop(1,'rgba(160,0,255,0.85)');
   cx.fillStyle=storm;cx.fillRect(0,0,sw,H);
   cx.strokeStyle='rgba(200,0,255,0.9)';cx.lineWidth=4+2*Math.sin(frame*.08);cx.shadowColor='#aa00ff';cx.shadowBlur=20;cx.beginPath();cx.moveTo(sw,0);cx.lineTo(sw,H);cx.stroke();cx.shadowBlur=0;
@@ -1537,8 +1537,8 @@ def do_medkit_online(room_code, role):
 
 # ── State init ────────────────────────────────────────────────────────────────
 def init_state():
-    defs={"game_mode":None,"sp_skin":None,"sp_w1":None,"sp_w2":None,"sp_name":"Ayaan",
-          "lc_n1":"Ayaan","lc_n2":"Omer","lc_s1":skin_names[0],"lc_s2":skin_names[1],
+    defs={"game_mode":None,"sp_skin":None,"sp_w1":None,"sp_w2":None,"sp_name":"",
+          "lc_n1":"","lc_n2":"","lc_s1":skin_names[0],"lc_s2":skin_names[1],
           "lc_w1a":weapon_names[0],"lc_w1b":weapon_names[1],"lc_w2a":weapon_names[2],"lc_w2b":weapon_names[3],
           "room_code":None,"room_role":None}
     for k,v in defs.items():
@@ -1586,10 +1586,10 @@ if st.session_state.game_mode is None:
         (bg4,"🗺️","ZONE WARS","Top-down survival. WASD + mouse aim. 4 AI enemies. Storm closes in!","lobby_zone"),
     ]:
         with col:
-            st.markdown(f"""<div style="background:rgba(5,10,40,.85);border:2px solid rgba(0,200,255,.25);border-radius:12px;padding:12px;text-align:center;min-height:118px;">
-<div style="font-size:32px;">{icon}</div>
-<div style="font-family:'Bangers',sans-serif;font-size:16px;letter-spacing:2px;color:#40c4ff;">{title}</div>
-<div style="font-size:9.5px;color:#8899bb;margin-top:4px;">{desc}</div></div>""",unsafe_allow_html=True)
+            st.markdown(f"""<div style="background:rgba(5,10,40,.85);border:2px solid rgba(0,200,255,.25);border-radius:12px;padding:12px;text-align:center;height:138px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;">
+<div style="font-size:30px;line-height:1.1;">{icon}</div>
+<div style="font-family:'Bangers',sans-serif;font-size:15px;letter-spacing:2px;color:#40c4ff;margin:4px 0 2px;">{title}</div>
+<div style="font-size:9px;color:#8899bb;line-height:1.35;overflow:hidden;">{desc}</div></div>""",unsafe_allow_html=True)
             if st.button("PLAY",key=f"m_{mode}",use_container_width=True):
                 st.session_state.game_mode=mode; st.rerun()
     with st.expander("📖 Controls & Tips",expanded=False):
@@ -1614,7 +1614,7 @@ elif st.session_state.game_mode=="lobby_sp":
     st.markdown("### 🏰 DEFEND THE KINGDOM — SOLO (HARD)")
     c1,c2=st.columns([1,2])
     with c1:
-        spn=st.text_input("Your Name",value="Ayaan",key="spni",max_chars=14)
+        spn=st.text_input("Your Name",value="",placeholder="Enter your name",key="spni",max_chars=14)
         sps=st.selectbox("Skin",skin_names,key="sps")
         spw1=st.selectbox("🔫 Gun 1",weapon_names,index=0,key="spw1")
         spw2=st.selectbox("💣 Gun 2",weapon_names,index=1,key="spw2")
@@ -1654,13 +1654,13 @@ elif st.session_state.game_mode=="lobby_2p_local":
     c1,c2=st.columns(2)
     with c1:
         st.markdown("#### 🟦 Player 1 (WASD + F to shoot)")
-        n1=st.text_input("Name",value="Ayaan",key="lc_n1_in",max_chars=14)
+        n1=st.text_input("Name",value="",placeholder="P1 name",key="lc_n1_in",max_chars=14)
         s1=st.selectbox("Skin",skin_names,key="lcs1")
         w1a=st.selectbox("🔫 Gun 1 [Z]",weapon_names,index=0,key="lcw1a")
         w1b=st.selectbox("💣 Gun 2 [X]",weapon_names,index=1,key="lcw1b")
     with c2:
         st.markdown("#### 🟥 Player 2 (Arrows + L to shoot)")
-        n2=st.text_input("Name",value="Omer",key="lc_n2_in",max_chars=14)
+        n2=st.text_input("Name",value="",placeholder="P2 name",key="lc_n2_in",max_chars=14)
         s2=st.selectbox("Skin",skin_names,index=1,key="lcs2")
         w2a=st.selectbox("🔫 Gun 1 [,]",weapon_names,index=2,key="lcw2a")
         w2b=st.selectbox("💣 Gun 2 [.]",weapon_names,index=3,key="lcw2b")
@@ -1685,7 +1685,7 @@ elif st.session_state.game_mode=="lobby_2p_online":
     st.info("💡 Both players open the same Streamlit URL. One creates a room and shares the 4-digit code. The other joins with that code.")
     c1,c2=st.columns(2)
     with c1:
-        on_n=st.text_input("Your Name",value="Ayaan",key="on_name_in",max_chars=14)
+        on_n=st.text_input("Your Name",value="",placeholder="Enter your name",key="on_name_in",max_chars=14)
         on_s=st.selectbox("Skin",skin_names,key="on_skin")
         on_w1=st.selectbox("🔫 Gun 1",weapon_names,index=0,key="on_w1")
         on_w2=st.selectbox("💣 Gun 2",weapon_names,index=1,key="on_w2")
@@ -1834,10 +1834,10 @@ elif st.session_state.game_mode=="lobby_sniper":
     c1,c2=st.columns(2)
     with c1:
         st.markdown("**🟦 Player 1** — key: `SPACE`")
-        n1=st.text_input("P1 Name",value="Ayaan",key="sn_n1",max_chars=12)
+        n1=st.text_input("P1 Name",value="",placeholder="Enter name",key="sn_n1",max_chars=12)
     with c2:
         st.markdown("**🟥 Player 2** — key: `ENTER`")
-        n2=st.text_input("P2 Name",value="Omer",key="sn_n2",max_chars=12)
+        n2=st.text_input("P2 Name",value="",placeholder="Enter name",key="sn_n2",max_chars=12)
     col_l,col_r=st.columns([1,3])
     with col_l:
         if st.button("🎯 DUEL!",type="primary",use_container_width=True,key="sn_start"):
@@ -1858,7 +1858,7 @@ elif st.session_state.game_mode=="lobby_sprint":
     st.info("The storm chases you from the left and accelerates! Double-jump over obstacles (rocks, trees, gaps). Collect loot crates for extra HP/shields. How far can you run?")
     c1,c2=st.columns([1,3])
     with c1:
-        nm=st.text_input("Your Name",value="Ayaan",key="sp_nm",max_chars=12)
+        nm=st.text_input("Your Name",value="",placeholder="Enter name",key="sp_nm",max_chars=12)
         if st.button("🏃 RUN!",type="primary",use_container_width=True,key="sp_start"):
             st.session_state["sprint_name"]=nm
             st.session_state.game_mode="sprint_game"; st.rerun()
@@ -1882,7 +1882,7 @@ elif st.session_state.game_mode=="lobby_blitz":
     st.info("Targets appear and disappear fast. Click them before they vanish! Chain hits to build a COMBO multiplier. Targets shrink and multiply as your score grows. 60 seconds — aim for LEGENDARY!")
     c1,c2=st.columns([1,3])
     with c1:
-        nm=st.text_input("Your Name",value="Ayaan",key="bl_nm",max_chars=12)
+        nm=st.text_input("Your Name",value="",placeholder="Enter name",key="bl_nm",max_chars=12)
         if st.button("🎯 PLAY!",type="primary",use_container_width=True,key="bl_start"):
             st.session_state["blitz_name"]=nm
             st.session_state.game_mode="blitz_game"; st.rerun()
@@ -1910,7 +1910,7 @@ elif st.session_state.game_mode=="lobby_zone":
     st.info("Top-down arena. 4 AI enemies hunt you. The storm rectangle shrinks — stay inside or take damage! Collect loot for HP/shields. Eliminate all enemies to win!")
     c1,c2=st.columns([1,3])
     with c1:
-        nm=st.text_input("Your Name",value="Ayaan",key="zw_nm",max_chars=12)
+        nm=st.text_input("Your Name",value="",placeholder="Enter name",key="zw_nm",max_chars=12)
         if st.button("🗺️ DROP IN!",type="primary",use_container_width=True,key="zw_start"):
             st.session_state["zone_name"]=nm
             st.session_state.game_mode="zone_game"; st.rerun()
