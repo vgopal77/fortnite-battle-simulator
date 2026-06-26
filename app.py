@@ -1439,6 +1439,159 @@ cvs.setAttribute('tabindex','0');cvs.focus();draw();
 (function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';var cv=document.getElementById('g');b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.addEventListener('fullscreenchange',function(){if(document.fullscreenElement){var cw=cv.width,ch=cv.height,s=Math.min(window.innerWidth/cw,window.innerHeight/ch);cv.style.position='fixed';cv.style.left=Math.round((window.innerWidth-cw*s)/2)+'px';cv.style.top=Math.round((window.innerHeight-ch*s)/2)+'px';cv.style.transform='scale('+s+')';cv.style.transformOrigin='0 0';document.body.style.background='#000';b.textContent='✕';}else{cv.style.position='';cv.style.left='';cv.style.top='';cv.style.transform='';cv.style.transformOrigin='';b.textContent='⛶';}});document.body.appendChild(b);})();
 </script></body></html>"""
 
+# ── Game 8b: CAPTURE THE FLAG ────────────────────────────────────────────────
+_CTF_HTML = r"""<!DOCTYPE html><html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#060a18;overflow:hidden;}canvas{display:block;}</style>
+</head><body><canvas id="g"></canvas><script>
+const cvs=document.getElementById('g'),cx=cvs.getContext('2d');
+const W=cvs.width=Math.min(960,window.innerWidth-4),H=cvs.height=520;
+const BW=130,WIN=3,SPEED=3.4,TAG_R=28,GRAB_R=26;
+const P1N='__CTF_P1NAME__',P2N='__CTF_P2NAME__';
+const P1C='__CTF_P1COL__',P2C='__CTF_P2COL__';
+const SFX=(function(){let _c=null;function gc(){if(!_c)_c=new(window.AudioContext||window.webkitAudioContext)();return _c;}function tn(f,t,d,v){try{let x=gc(),o=x.createOscillator(),g=x.createGain();o.connect(g);g.connect(x.destination);o.type=t||'sine';o.frequency.setValueAtTime(f,x.currentTime);g.gain.setValueAtTime(v||.22,x.currentTime);g.gain.exponentialRampToValueAtTime(.001,x.currentTime+(d||.2));o.start();o.stop(x.currentTime+(d||.2));}catch(e){}}function ns(d,v,f){try{let x=gc(),b=x.createBuffer(1,Math.ceil(x.sampleRate*d),x.sampleRate),da=b.getChannelData(0);for(let i=0;i<da.length;i++)da[i]=Math.random()*2-1;let s=x.createBufferSource(),fi=x.createBiquadFilter(),g=x.createGain();fi.type='bandpass';fi.frequency.value=f||800;g.gain.setValueAtTime(v||.28,x.currentTime);g.gain.exponentialRampToValueAtTime(.001,x.currentTime+d);s.buffer=b;s.connect(fi);fi.connect(g);g.connect(x.destination);s.start();}catch(e){}}return{collect:()=>{tn(600,'sine',.07,.2);setTimeout(()=>tn(900,'sine',.07,.2),80);},goal:()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,'sine',.18,.26),i*110));},hit:()=>{ns(.04,.28,300);tn(80,'square',.04,.14);},die:()=>{try{let x=gc(),o=x.createOscillator(),g=x.createGain();o.connect(g);g.connect(x.destination);o.type='sawtooth';o.frequency.setValueAtTime(260,x.currentTime);o.frequency.exponentialRampToValueAtTime(35,x.currentTime+.55);g.gain.setValueAtTime(.26,x.currentTime);g.gain.exponentialRampToValueAtTime(.001,x.currentTime+.55);o.start();o.stop(x.currentTime+.55);}catch(e){}}};})();
+const WALLS=[
+  {x:W*.26,y:H*.15,w:18,h:H*.50},{x:W*.26,y:H*.75,w:18,h:H*.14},
+  {x:W*.50-9,y:H*.10,w:18,h:H*.32},{x:W*.50-9,y:H*.58,w:18,h:H*.32},
+  {x:W*.74-18,y:H*.15,w:18,h:H*.50},{x:W*.74-18,y:H*.75,w:18,h:H*.14},
+];
+const bflag={x:BW*.55,y:H/2,hx:BW*.55,hy:H/2,carrier:null};
+const rflag={x:W-BW*.55,y:H/2,hx:W-BW*.55,hy:H/2,carrier:null};
+const p1={x:80,y:H/2,r:15,team:'blue',hasFlag:false,tagCd:0};
+const p2={x:W-80,y:H/2,r:15,team:'red',hasFlag:false,tagCd:0};
+let score={p1:0,p2:0},phase='play',frame=0,keys={};
+let particles=[];
+function wallHit(x,y,r){for(let w of WALLS){let cx2=Math.max(w.x,Math.min(x,w.x+w.w)),cy2=Math.max(w.y,Math.min(y,w.y+w.h));if(Math.hypot(x-cx2,y-cy2)<r)return true;}return false;}
+function move(p,dx,dy,spd){
+  if(!dx&&!dy)return;
+  let l=Math.hypot(dx,dy)||1,nx=Math.max(p.r,Math.min(W-p.r,p.x+dx/l*spd)),ny=Math.max(p.r,Math.min(H-p.r,p.y+dy/l*spd));
+  if(!wallHit(nx,ny,p.r)){p.x=nx;p.y=ny;}else if(!wallHit(nx,p.y,p.r)){p.x=nx;}else if(!wallHit(p.x,ny,p.r)){p.y=ny;}
+}
+function addParticles(x,y,col,n){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6-2,r:4+Math.random()*3,c:col,l:28,ml:28});}
+function aiUpdate(){
+  let tx,ty;
+  if(p2.hasFlag){tx=rflag.hx;ty=rflag.hy;}
+  else if(bflag.carrier===null){tx=bflag.x;ty=bflag.y;}
+  else{tx=p1.x;ty=p1.y;}
+  let dx=tx-p2.x,dy=ty-p2.y,spd=2.8+(frame%180<90?.4:0);
+  move(p2,dx,dy,spd);
+}
+function update(){
+  if(phase!=='play')return;
+  frame++;
+  let dx=0,dy=0;
+  if(keys['KeyA'])dx=-1;if(keys['KeyD'])dx=1;if(keys['KeyW'])dy=-1;if(keys['KeyS'])dy=1;
+  move(p1,dx,dy,SPEED);
+  __CTF_P2_UPDATE__
+  if(p1.hasFlag){bflag.x=p1.x;bflag.y=p1.y-22;}
+  if(p2.hasFlag){rflag.x=p2.x;rflag.y=p2.y-22;}
+  if(!rflag.carrier&&!p1.hasFlag&&Math.hypot(p1.x-rflag.x,p1.y-rflag.y)<GRAB_R){rflag.carrier='p1';p1.hasFlag=true;SFX.collect();addParticles(rflag.x,rflag.y,P2C,10);}
+  if(!bflag.carrier&&!p2.hasFlag&&Math.hypot(p2.x-bflag.x,p2.y-bflag.y)<GRAB_R){bflag.carrier='p2';p2.hasFlag=true;SFX.collect();addParticles(bflag.x,bflag.y,P1C,10);}
+  if(p1.hasFlag&&p1.x<BW){
+    score.p1++;rflag.x=rflag.hx;rflag.y=rflag.hy;rflag.carrier=null;p1.hasFlag=false;
+    SFX.goal();addParticles(p1.x,p1.y,'#FFD100',20);
+    if(score.p1>=WIN){phase='end';}
+  }
+  if(p2.hasFlag&&p2.x>W-BW){
+    score.p2++;bflag.x=bflag.hx;bflag.y=bflag.hy;bflag.carrier=null;p2.hasFlag=false;
+    SFX.goal();addParticles(p2.x,p2.y,'#FFD100',20);
+    if(score.p2>=WIN){phase='end';}
+  }
+  if(p1.tagCd>0)p1.tagCd--;if(p2.tagCd>0)p2.tagCd--;
+  let td=Math.hypot(p1.x-p2.x,p1.y-p2.y);
+  if(td<TAG_R+4){
+    if(p1.hasFlag&&p2.tagCd<=0){p1.hasFlag=false;rflag.carrier=null;rflag.x=p1.x;rflag.y=p1.y;p2.tagCd=90;SFX.hit();addParticles(p1.x,p1.y,'#ff5252',8);}
+    if(p2.hasFlag&&p1.tagCd<=0){p2.hasFlag=false;bflag.carrier=null;bflag.x=p2.x;bflag.y=p2.y;p1.tagCd=90;SFX.hit();addParticles(p2.x,p2.y,'#4da6ff',8);}
+  }
+  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.l--;return p.l>0;});
+}
+function drawBase(x,w,col){
+  cx.fillStyle=col+'22';cx.fillRect(x,0,w,H);
+  cx.strokeStyle=col+'88';cx.lineWidth=3;cx.strokeRect(x+1.5,1.5,w-3,H-3);
+}
+function drawFlag(flag,col,isHome){
+  cx.save();
+  let glow=cx.createRadialGradient(flag.x,flag.y,0,flag.x,flag.y,22);
+  glow.addColorStop(0,col+'88');glow.addColorStop(1,'transparent');
+  cx.fillStyle=glow;cx.beginPath();cx.arc(flag.x,flag.y,22,0,Math.PI*2);cx.fill();
+  cx.strokeStyle=col;cx.lineWidth=3;
+  cx.beginPath();cx.moveTo(flag.x,flag.y-18);cx.lineTo(flag.x,flag.y+10);cx.stroke();
+  cx.fillStyle=col;cx.beginPath();cx.moveTo(flag.x,flag.y-18);cx.lineTo(flag.x+16,flag.y-10);cx.lineTo(flag.x,flag.y-2);cx.closePath();cx.fill();
+  if(!isHome){cx.strokeStyle='#FFD100';cx.lineWidth=2;cx.setLineDash([3,3]);cx.beginPath();cx.arc(flag.x,flag.y,26,0,Math.PI*2);cx.stroke();cx.setLineDash([]);}
+  cx.restore();
+}
+function drawPlayer(p,name){
+  cx.fillStyle='rgba(0,0,0,.22)';cx.beginPath();cx.ellipse(p.x,p.y+p.r*.7,p.r*.9,p.r*.35,0,0,Math.PI*2);cx.fill();
+  let col=p.team==='blue'?P1C:P2C;
+  if(p.tagCd>0&&Math.floor(p.tagCd/4)%2===0){cx.save();cx.globalAlpha=.4;}
+  let g=cx.createRadialGradient(p.x-4,p.y-4,2,p.x,p.y,p.r);
+  g.addColorStop(0,col+'ff');g.addColorStop(1,col+'88');
+  cx.fillStyle=g;cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fill();
+  cx.strokeStyle='rgba(255,255,255,.45)';cx.lineWidth=2;cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.stroke();
+  cx.fillStyle='#fff';cx.font='bold 10px Rajdhani,sans-serif';cx.textAlign='center';
+  cx.fillText(name.length>8?name.substring(0,8).toUpperCase():name.toUpperCase(),p.x,p.y-p.r-4);
+  if(p.hasFlag){cx.strokeStyle='#FFD100';cx.lineWidth=2.5;cx.setLineDash([4,3]);cx.beginPath();cx.arc(p.x,p.y,p.r+6,0,Math.PI*2);cx.stroke();cx.setLineDash([]);}
+  if(p.tagCd>0&&Math.floor(p.tagCd/4)%2===0)cx.restore();
+  cx.textAlign='left';
+}
+function drawHUD(){
+  cx.fillStyle='rgba(0,0,15,.92)';cx.fillRect(0,0,W,44);
+  cx.fillStyle=P1C;cx.font='bold 22px Bangers,sans-serif';cx.textAlign='left';cx.fillText(P1N.toUpperCase(),14,30);
+  cx.fillStyle='#FFD100';cx.font='bold 32px Bangers,sans-serif';cx.textAlign='center';
+  cx.fillText(score.p1+' : '+score.p2,W/2,32);
+  cx.fillStyle=P2C;cx.font='bold 22px Bangers,sans-serif';cx.textAlign='right';cx.fillText(P2N.toUpperCase(),W-14,30);
+  cx.fillStyle='rgba(255,255,200,.4)';cx.font='8px Rajdhani,sans-serif';cx.textAlign='center';
+  cx.fillText('First to '+WIN+' captures wins  ·  __CTF_CONTROLS_HINT__',W/2,42);
+  cx.textAlign='left';
+}
+function draw(){
+  cx.clearRect(0,0,W,H);
+  cx.fillStyle='#1a2a0a';cx.fillRect(0,0,W,H);
+  for(let i=0;i<Math.ceil(H/40);i++){if(i%2===0){cx.fillStyle='rgba(255,255,255,.02)';cx.fillRect(0,i*40,W,40);}}
+  drawBase(0,BW,'#2196F3');drawBase(W-BW,BW,'#f44336');
+  cx.fillStyle='#4da6ff88';cx.font='bold 14px Bangers,sans-serif';cx.textAlign='center';cx.fillText('BASE',BW/2,H/2+55);
+  cx.fillStyle='#ff525288';cx.fillText('BASE',W-BW/2,H/2+55);cx.textAlign='left';
+  WALLS.forEach(w=>{
+    let wg=cx.createLinearGradient(w.x,w.y,w.x+w.w,w.y+w.h);
+    wg.addColorStop(0,'#3a4a5a');wg.addColorStop(1,'#1e2a3a');
+    cx.fillStyle=wg;cx.fillRect(w.x,w.y,w.w,w.h);
+    cx.strokeStyle='rgba(100,150,200,.35)';cx.lineWidth=1.5;cx.strokeRect(w.x,w.y,w.w,w.h);
+  });
+  drawFlag(bflag,'#4da6ff',!p1.hasFlag||bflag.carrier!=='p1');
+  drawFlag(rflag,'#ff5252',!p2.hasFlag||rflag.carrier!=='p2');
+  particles.forEach(p=>{let a=p.l/p.ml;cx.fillStyle=p.c+(Math.round(a*255).toString(16).padStart(2,'0'));cx.beginPath();cx.arc(p.x,p.y,p.r*a,0,Math.PI*2);cx.fill();});
+  [p1,p2].sort((a,b)=>a.y-b.y).forEach(p=>drawPlayer(p,p===p1?P1N:P2N));
+  for(let i=0;i<WIN;i++){
+    cx.beginPath();cx.arc(W/2-WIN*12+i*24,60,8,0,Math.PI*2);
+    cx.fillStyle=i<score.p1?P1C:'rgba(255,255,255,.12)';cx.fill();
+  }
+  for(let i=0;i<WIN;i++){
+    cx.beginPath();cx.arc(W/2+WIN*12-i*24,60,8,0,Math.PI*2);
+    cx.fillStyle=i<score.p2?P2C:'rgba(255,255,255,.12)';cx.fill();
+  }
+  drawHUD();
+  if(phase==='end'){
+    cx.fillStyle='rgba(0,0,18,.88)';cx.fillRect(0,0,W,H);
+    let won=score.p1>=WIN?P1N:P2N;let wc=score.p1>=WIN?P1C:P2C;
+    cx.fillStyle=wc;cx.shadowColor=wc;cx.shadowBlur=24;
+    cx.font='bold 60px Bangers,sans-serif';cx.textAlign='center';
+    cx.fillText(won.toUpperCase()+' WINS!',W/2,H*.4);cx.shadowBlur=0;
+    cx.fillStyle='#FFD100';cx.font='bold 28px Bangers,sans-serif';
+    cx.fillText(score.p1+' — '+score.p2,W/2,H*.54);
+    cx.fillStyle='rgba(255,255,255,.45)';cx.font='13px Rajdhani,sans-serif';
+    cx.fillText('Press R to play again',W/2,H*.66);cx.textAlign='left';
+  }
+  update();frame++;requestAnimationFrame(draw);
+}
+document.addEventListener('keydown',e=>{
+  keys[e.code]=true;if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();
+  if(e.code==='KeyR'&&phase==='end'){score={p1:0,p2:0};phase='play';frame=0;p1.x=80;p1.y=H/2;p1.hasFlag=false;p1.tagCd=0;p2.x=W-80;p2.y=H/2;p2.hasFlag=false;p2.tagCd=0;bflag.x=bflag.hx;bflag.y=bflag.hy;bflag.carrier=null;rflag.x=rflag.hx;rflag.y=rflag.hy;rflag.carrier=null;}
+});
+document.addEventListener('keyup',e=>{keys[e.code]=false;});
+(function(){var b=document.createElement('button');b.textContent='⛶';b.title='Fullscreen';b.style.cssText='position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,20,.8);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:16px;cursor:pointer;';b.onclick=function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){});}else{document.exitFullscreen();}};document.body.appendChild(b);})();
+draw();
+</script></body></html>"""
+
 # ── Game 8: YAANA KICK (arena soccer) ────────────────────────────────────────
 _SOCCER_HTML = r"""<!DOCTYPE html><html><head><meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -1449,15 +1602,14 @@ const W=cvs.width=Math.min(1100,window.innerWidth-4),H=cvs.height=570;
 const PX=W*.055,PY=H*.10,PW=W*.89,PH=H*.80,PR=PX+PW,PB=PY+PH,PCX=PX+PW/2,PCY=PY+PH/2;
 const GW=PW*.25,GD=26;
 const P1JN='__SC_P1JN__',AIJN='__SC_AI_JN__',AINAME='__SC_AI_NAME__';
+const P1CDARK='__SC_P1CDARK__',P1CLIGHT='__SC_P1CLIGHT__',P2CDARK='__SC_P2CDARK__',P2CLIGHT='__SC_P2CLIGHT__';
 const P1SPD=__SC_P1SPD__,AISPD=__SC_AI_SPD__,GKSPD=6,FRIC=0.865,KICK=__SC_P1KICK__,AIKICK=__SC_AI_KICK__,POSS=28;
 let score={p:0,a:0},timer=180,tFrame=0,phase='play';
 let goalTimer=0,goalTeam='',frame=0,trail=[],keys={},hitFX=[];
 const SFX=(function(){let _c=null;function gc(){if(!_c)_c=new(window.AudioContext||window.webkitAudioContext)();return _c;}function tn(f,t,d,v){try{let x=gc(),o=x.createOscillator(),g=x.createGain();o.connect(g);g.connect(x.destination);o.type=t||'sine';o.frequency.setValueAtTime(f,x.currentTime);g.gain.setValueAtTime(v||.22,x.currentTime);g.gain.exponentialRampToValueAtTime(.001,x.currentTime+(d||.2));o.start();o.stop(x.currentTime+(d||.2));}catch(e){}}function ns(d,v,f){try{let x=gc(),b=x.createBuffer(1,Math.ceil(x.sampleRate*d),x.sampleRate),da=b.getChannelData(0);for(let i=0;i<da.length;i++)da[i]=Math.random()*2-1;let s=x.createBufferSource(),fi=x.createBiquadFilter(),g=x.createGain();fi.type='bandpass';fi.frequency.value=f||800;g.gain.setValueAtTime(v||.28,x.currentTime);g.gain.exponentialRampToValueAtTime(.001,x.currentTime+d);s.buffer=b;s.connect(fi);fi.connect(g);g.connect(x.destination);s.start();}catch(e){}}return{shoot:()=>{ns(.06,.38,900);tn(110,'sawtooth',.05,.18);},hit:()=>{ns(.04,.28,300);tn(80,'square',.04,.14);},jump:()=>{try{let x=gc(),o=x.createOscillator(),g=x.createGain();o.connect(g);g.connect(x.destination);o.type='sine';o.frequency.setValueAtTime(170,x.currentTime);o.frequency.exponentialRampToValueAtTime(500,x.currentTime+.13);g.gain.setValueAtTime(.17,x.currentTime);g.gain.exponentialRampToValueAtTime(.001,x.currentTime+.16);o.start();o.stop(x.currentTime+.16);}catch(e){}},collect:()=>{tn(600,'sine',.07,.2);setTimeout(()=>tn(900,'sine',.07,.2),80);},goal:()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,'sine',.18,.26),i*110));},kick:()=>{ns(.04,.48,170);},die:()=>{try{let x=gc(),o=x.createOscillator(),g=x.createGain();o.connect(g);g.connect(x.destination);o.type='sawtooth';o.frequency.setValueAtTime(260,x.currentTime);o.frequency.exponentialRampToValueAtTime(35,x.currentTime+.55);g.gain.setValueAtTime(.26,x.currentTime);g.gain.exponentialRampToValueAtTime(.001,x.currentTime+.55);o.start();o.stop(x.currentTime+.55);}catch(e){}},storm:()=>{ns(.13,.11,80);},score:()=>{[500,700,950].forEach((f,i)=>setTimeout(()=>tn(f,'triangle',.09,.2),i*65));},miss:()=>{tn(160,'sine',.09,.09);},wave:()=>{[380,520,680].forEach((f,i)=>setTimeout(()=>tn(f,'sine',.14,.2),i*90));},whistle:()=>{try{let x=gc(),o=x.createOscillator(),g=x.createGain();o.connect(g);g.connect(x.destination);o.type='sine';o.frequency.setValueAtTime(1100,x.currentTime);o.frequency.setValueAtTime(1350,x.currentTime+.14);o.frequency.setValueAtTime(1100,x.currentTime+.28);g.gain.setValueAtTime(.17,x.currentTime);g.gain.exponentialRampToValueAtTime(.001,x.currentTime+.38);o.start();o.stop(x.currentTime+.38);}catch(e){}}};})();
 
 const p1  ={x:PCX,     y:PCY+PH*.30,vx:0,vy:0,walk:0,hasBall:false,team:'blue',  cd:0, name:'__SC_NAME__'};
-const fwd ={x:PCX+50,  y:PCY-PH*.28,vx:0,vy:0,walk:0,hasBall:false,team:'red',   cd:0, ptX:PCX,ptY:PCY-PH*.24,ptT:0};
-const mid ={x:PCX-50,  y:PCY-PH*.06,vx:0,vy:0,walk:0,hasBall:false,team:'red',   cd:0};
-const gk  ={x:PCX,     y:PB-30,              walk:0,hasBall:false,team:'orange',cd:0};
+__SC_AGENTS_INIT__
 const ball={x:PCX,y:PCY,vx:0,vy:0,r:11,spin:0};
 function dst(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
@@ -1516,8 +1668,8 @@ function drawCrowd(){
 function drawPlayer(obj,jn){
   let{x,y,walk,hasBall,team}=obj,isGK=obj.isGK||false;
   let wk=Math.sin(walk*.9)*12;
-  let dk=team==='blue'?'#0d3a7a':team==='red'?'#7a0d0d':'#7a3200';
-  let lt=team==='blue'?'#2196F3':team==='red'?'#f44336':'#FF6D00';
+  let dk=team==='blue'?P1CDARK:team==='red'?P2CDARK:'#5a2200';
+  let lt=team==='blue'?P1CLIGHT:team==='red'?P2CLIGHT:'#FF6D00';
   cx.fillStyle='rgba(0,0,0,.22)';cx.beginPath();cx.ellipse(x,y+33,15,5,0,0,Math.PI*2);cx.fill();
   cx.strokeStyle=dk;cx.lineWidth=5;cx.lineCap='round';
   cx.beginPath();cx.moveTo(x-5,y+10);cx.lineTo(x-5+wk,y+28);cx.stroke();
@@ -1557,30 +1709,27 @@ function drawBall(){
 function drawHUD(){
   let hh=H*.09;
   cx.fillStyle='rgba(0,0,12,.93)';cx.fillRect(0,0,W,hh);
-  cx.fillStyle='#1565c0';cx.fillRect(W*.03,hh*.2,13,13);
+  cx.fillStyle=P1CDARK;cx.fillRect(W*.03,hh*.2,13,13);
   let p1n=p1.name.length>9?p1.name.substring(0,9).toUpperCase():p1.name.toUpperCase();
-  cx.fillStyle='#64b5f6';cx.font='bold 13px Rajdhani,sans-serif';cx.textAlign='left';cx.fillText(p1n,W*.065,hh*.65);
-  cx.fillStyle='#4fc3f7';cx.font='bold 28px Bangers,sans-serif';cx.textAlign='right';cx.fillText(score.p,W*.46,hh*.82);
+  cx.fillStyle=P1CLIGHT;cx.font='bold 13px Rajdhani,sans-serif';cx.textAlign='left';cx.fillText(p1n,W*.065,hh*.65);
+  cx.fillStyle=P1CLIGHT;cx.font='bold 28px Bangers,sans-serif';cx.textAlign='right';cx.fillText(score.p,W*.46,hh*.82);
   cx.fillStyle='rgba(255,255,255,.6)';cx.font='bold 20px Bangers,sans-serif';cx.textAlign='center';cx.fillText('—',W*.50,hh*.82);
-  cx.fillStyle='#ef9a9a';cx.font='bold 28px Bangers,sans-serif';cx.textAlign='left';cx.fillText(score.a,W*.54,hh*.82);
-  cx.fillStyle='#b71c1c';cx.fillRect(W*.97-13,hh*.2,13,13);
+  cx.fillStyle=P2CLIGHT;cx.font='bold 28px Bangers,sans-serif';cx.textAlign='left';cx.fillText(score.a,W*.54,hh*.82);
+  cx.fillStyle=P2CDARK;cx.fillRect(W*.97-13,hh*.2,13,13);
   let ain=AINAME.length>9?AINAME.substring(0,9).toUpperCase():AINAME.toUpperCase();
-  cx.fillStyle='#ef9a9a';cx.font='bold 13px Rajdhani,sans-serif';cx.textAlign='right';cx.fillText(ain,W*.97,hh*.65);
+  cx.fillStyle=P2CLIGHT;cx.font='bold 13px Rajdhani,sans-serif';cx.textAlign='right';cx.fillText(ain,W*.97,hh*.65);
   let mins=Math.floor(timer/60),secs=timer%60;
   cx.fillStyle=timer<30?'#ff4444':'#FFD100';cx.font='bold 18px Bangers,sans-serif';cx.textAlign='center';
   cx.fillText(`${mins}:${secs<10?'0':''}${secs}`,W*.50,hh*.40);
   cx.fillStyle='rgba(120,150,200,.4)';cx.font='8px Rajdhani,sans-serif';
-  cx.fillText('WASD · SPACE Kick · SHIFT Sprint · R Replay',W*.50,hh*.92);
+  cx.fillText('__SC_HUD_HINT__',W*.50,hh*.92);
   cx.textAlign='left';
 }
 function update(){
   if(phase!=='play')return;
   tFrame++;if(tFrame>=60){tFrame=0;timer--;if(timer<=0){timer=0;phase='end';}}
   let dx=0,dy=0;
-  if(keys['KeyW']||keys['ArrowUp'])dy=-1;
-  if(keys['KeyS']||keys['ArrowDown'])dy=1;
-  if(keys['KeyA']||keys['ArrowLeft'])dx=-1;
-  if(keys['KeyD']||keys['ArrowRight'])dx=1;
+  __SC_P1_KEYS__
   let sp=(keys['ShiftLeft']||keys['ShiftRight'])?1.55:1;
   if(dx||dy){
     let l=Math.hypot(dx,dy);
@@ -1598,49 +1747,7 @@ function update(){
     hitFX.push({x:ball.x,y:ball.y,l:22,ml:22,txt:'KICK!'});
   }
   if(p1.cd>0)p1.cd--;
-  // AI Forward — chases ball aggressively when in upper half; patrols attack zone otherwise
-  fwd.ptT++;
-  let ballInFwdZone=ball.y<PCY+PH*.18;
-  let fTX=ballInFwdZone||dst(fwd,ball)<90?ball.x:fwd.ptX;
-  let fTY=ballInFwdZone||dst(fwd,ball)<90?ball.y:fwd.ptY;
-  if(fwd.ptT>95){fwd.ptT=0;fwd.ptX=PCX+(Math.random()-.5)*PW*.5;fwd.ptY=PCY-PH*.24+(Math.random()-.5)*PH*.1;}
-  let fD=Math.hypot(fTX-fwd.x,fTY-fwd.y)||1;
-  if(fD>2){fwd.x=clamp(fwd.x+(fTX-fwd.x)/fD*AISPD,PX+14,PR-14);fwd.y=clamp(fwd.y+(fTY-fwd.y)/fD*AISPD,PY+14,PB-14);fwd.walk+=.2;}
-  if(fwd.cd>0){fwd.cd--;}
-  else if(dst(fwd,ball)<POSS+ball.r){
-    let tx=PCX+(Math.random()-.5)*GW*.6,ty=PB+GD/2;
-    let kl=Math.hypot(tx-fwd.x,ty-fwd.y)||1;
-    ball.vx=(tx-fwd.x)/kl*AIKICK+(Math.random()-.5)*2.2;
-    ball.vy=(ty-fwd.y)/kl*AIKICK+(Math.random()-.5)*2.2;SFX.kick();fwd.cd=55;
-  }
-  // AI Midfielder — covers center; drops back when ball is in player half
-  let mTX,mTY;
-  if(ball.y>PCY){mTX=clamp(ball.x,PCX-PW*.28,PCX+PW*.28);mTY=PCY+PH*.06;}
-  else if(dst(mid,ball)<95){mTX=ball.x;mTY=ball.y;}
-  else{mTX=PCX+(ball.x-PCX)*.35;mTY=PCY-PH*.04;}
-  let mD=Math.hypot(mTX-mid.x,mTY-mid.y)||1;
-  if(mD>2){mid.x=clamp(mid.x+(mTX-mid.x)/mD*AISPD*.82,PX+14,PR-14);mid.y=clamp(mid.y+(mTY-mid.y)/mD*AISPD*.82,PY+14,PB-14);mid.walk+=.17;}
-  if(mid.cd>0){mid.cd--;}
-  else if(dst(mid,ball)<POSS+ball.r){
-    let tx=PCX+(Math.random()-.5)*GW*.65,ty=PB+GD/2;
-    let kl=Math.hypot(tx-mid.x,ty-mid.y)||1;
-    ball.vx=(tx-mid.x)/kl*AIKICK*.88+(Math.random()-.5)*2.2;
-    ball.vy=(ty-mid.y)/kl*AIKICK*.88+(Math.random()-.5)*2.2;mid.cd=50;
-  }
-  separate(fwd,mid,42);
-  // GK — tracks ball X; comes out slightly for close balls
-  let gkTX=clamp(ball.x,PCX-GW/2+12,PCX+GW/2-12);
-  let gkTY=ball.y>PB-PH*.20?PB-44:PB-28;
-  gk.x+=(gkTX-gk.x)*.09;gk.y+=(gkTY-gk.y)*.06;
-  gk.x=clamp(gk.x,PCX-GW/2+12,PCX+GW/2-12);gk.y=clamp(gk.y,PB-PH*.22,PB-24);
-  gk.walk+=.12;
-  if(gk.cd>0){gk.cd--;}
-  else if(dst(gk,ball)<POSS+ball.r+6&&ball.y>PCY+PH*.22){
-    let tx=PCX+(Math.random()-.5)*PW*.38,ty=PCY+(Math.random()-.5)*PH*.2;
-    let kl=Math.hypot(tx-gk.x,ty-gk.y)||1;
-    ball.vx=(tx-gk.x)/kl*AIKICK*1.18+(Math.random()-.5)*2;
-    ball.vy=(ty-gk.y)/kl*AIKICK*1.18+(Math.random()-.5)*2;gk.cd=32;
-  }
+  __SC_AGENTS_UPDATE__
   // Ball physics
   ball.spin+=Math.hypot(ball.vx,ball.vy)*.04;
   ball.x+=ball.vx;ball.y+=ball.vy;ball.vx*=FRIC;ball.vy*=FRIC;
@@ -1652,32 +1759,19 @@ function update(){
   if(ball.y>PB-ball.r&&!inGX){ball.y=PB-ball.r;ball.vy*=-.62;}
   if(ball.y<=PY-ball.r&&inGX){score.p++;goalTeam='p';goalTimer=150;phase='goal';SFX.goal();resetKickoff();}
   if(ball.y>=PB+ball.r&&inGX){score.a++;goalTeam='a';goalTimer=150;phase='goal';SFX.goal();resetKickoff();}
-  p1.hasBall=dst(p1,ball)<POSS+ball.r;
-  fwd.hasBall=dst(fwd,ball)<POSS+ball.r;
-  mid.hasBall=dst(mid,ball)<POSS+ball.r;
-  gk.hasBall=dst(gk,ball)<POSS+ball.r;
+  __SC_POSSESS__
   hitFX=hitFX.filter(h=>{h.l--;h.y-=.7;return h.l>0;});
 }
 function resetKickoff(){
   ball.x=PCX;ball.y=PCY;ball.vx=0;ball.vy=0;trail=[];
   p1.x=PCX;p1.y=PCY+PH*.30;
-  fwd.x=PCX+50;fwd.y=PCY-PH*.28;
-  mid.x=PCX-50;mid.y=PCY-PH*.06;
-  gk.x=PCX;gk.y=PB-30;
+  __SC_RESET_POS__
   SFX.whistle();setTimeout(()=>{if(timer>0)phase='play';},2500);
 }
 function draw(){
   cx.clearRect(0,0,W,H);cx.fillStyle='#05090f';cx.fillRect(0,0,W,H);
   drawCrowd();drawPitch();
-  let objs=[{t:'p1',y:p1.y},{t:'fwd',y:fwd.y},{t:'mid',y:mid.y},{t:'gk',y:gk.y},{t:'ball',y:ball.y}];
-  objs.sort((a,b)=>a.y-b.y);
-  objs.forEach(o=>{
-    if(o.t==='ball')drawBall();
-    else if(o.t==='p1')drawPlayer(p1,P1JN);
-    else if(o.t==='fwd')drawPlayer(fwd,AIJN);
-    else if(o.t==='mid')drawPlayer(mid,AIJN);
-    else{gk.isGK=true;drawPlayer(gk,'GK');}
-  });
+  __SC_DRAW_OBJS__
   if(p1.hasBall&&p1.cd<=0&&phase==='play'){
     cx.fillStyle='rgba(255,215,0,.88)';cx.font='bold 11px Rajdhani,sans-serif';cx.textAlign='center';
     cx.fillText('SPACE to KICK',p1.x,p1.y-38);cx.textAlign='left';
@@ -1918,13 +2012,14 @@ if st.session_state.game_mode is None:
 <div style="font-family:'Bangers',sans-serif;font-size:18px;letter-spacing:6px;color:#40c4ff;">BONUS GAMES</div>
 <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(64,196,255,.35),transparent);"></div>
 </div>""", unsafe_allow_html=True)
-    bg1,bg2,bg3,bg4,bg5=st.columns(5,gap="small")
+    bg1,bg2,bg3,bg4,bg5,bg6=st.columns(6,gap="small")
     for col,icon,title,desc,mode in [
         (bg1,"🎯","SNIPER\nSHOWDOWN","2P timing duel. Hit when scope centers. 5 HP each!","lobby_sniper"),
         (bg2,"🏃","STORM\nSPRINT","Endless runner! Double-jump & outrun the storm!","lobby_sprint"),
         (bg3,"🎯","TARGET\nBLITZ","Click bullseyes. Build combos. 60 sec. Go LEGENDARY!","lobby_blitz"),
         (bg4,"🗺️","ZONE\nWARS","Top-down. WASD + mouse. 4 AI enemies. Storm in!","lobby_zone"),
-        (bg5,"⚽","YAANA\nKICK","Pick your legend: El Maestro, El Toro & more. 3-min match!","lobby_soccer"),
+        (bg5,"⚽","YAANA\nKICK","Pick your legend + country. vs AI or 2P Local!","lobby_soccer_menu"),
+        (bg6,"🚩","CAPTURE\nTHE FLAG","Steal the enemy flag! vs AI or 2P Local. First to 3!","lobby_ctf_menu"),
     ]:
         with col:
             t_lines=title.split('\n')
@@ -2283,6 +2378,27 @@ elif st.session_state.game_mode=="zone_game":
     if st.button("🏠 BACK TO MENU",key="zone_quit"): full_reset(); st.rerun()
 
 # ── YAANA KICK ───────────────────────────────────────────────────────────────
+elif st.session_state.game_mode=="lobby_soccer_menu":
+    st.markdown("### ⚽ YAANA KICK — CHOOSE MODE")
+    c1,c2=st.columns(2,gap="large")
+    with c1:
+        st.markdown("""<div style="background:linear-gradient(135deg,rgba(6,40,100,.95),rgba(4,25,70,.98));border:2px solid rgba(64,150,255,.5);border-radius:14px;padding:28px 20px;text-align:center;min-height:160px;">
+<div style="font-size:48px;margin-bottom:10px;">🤖</div>
+<div style="font-family:'Bangers',sans-serif;font-size:22px;letter-spacing:3px;color:#4da6ff;margin-bottom:8px;">VS AI</div>
+<div style="font-size:11px;color:rgba(160,200,255,.7);">Solo challenge. Face 3 AI players.<br>Pick your legend + country.</div>
+</div>""",unsafe_allow_html=True)
+        if st.button("▶  PLAY vs AI",key="sc_mode_ai",use_container_width=True,type="primary"):
+            st.session_state["sc_mode"]="ai"; st.session_state.game_mode="lobby_soccer"; st.rerun()
+    with c2:
+        st.markdown("""<div style="background:linear-gradient(135deg,rgba(60,10,80,.95),rgba(40,5,60,.98));border:2px solid rgba(200,100,255,.5);border-radius:14px;padding:28px 20px;text-align:center;min-height:160px;">
+<div style="font-size:48px;margin-bottom:10px;">👥</div>
+<div style="font-family:'Bangers',sans-serif;font-size:22px;letter-spacing:3px;color:#cc77ff;margin-bottom:8px;">2P LOCAL</div>
+<div style="font-size:11px;color:rgba(200,160,255,.7);">Two players, one screen.<br>P1: WASD+SPACE  |  P2: ↑↓←→ ENTER</div>
+</div>""",unsafe_allow_html=True)
+        if st.button("▶  2P LOCAL",key="sc_mode_2p",use_container_width=True):
+            st.session_state["sc_mode"]="2p"; st.session_state.game_mode="lobby_soccer"; st.rerun()
+    if st.button("🏠 MENU",key="sc_menu_back"): full_reset(); st.rerun()
+
 elif st.session_state.game_mode=="lobby_soccer":
     _SC_PLAYERS = {
         "El Maestro":   {"jersey":"8", "speed":5.3,"kick":13.5,"flag":"🌟","rating":99,"trait":"Dribble King"},
@@ -2296,15 +2412,56 @@ elif st.session_state.game_mode=="lobby_soccer":
         "The Pharaoh":  {"jersey":"14","speed":5.2,"kick":14.0,"flag":"🏆","rating":93,"trait":"Direct"},
         "Architect":    {"jersey":"18","speed":4.6,"kick":14.5,"flag":"🎯","rating":94,"trait":"Playmaker"},
     }
+    _SC_COUNTRIES = {
+        "🇧🇷 Brazil":      {"dark":"#006400","light":"#FFD700"},
+        "🇦🇷 Argentina":   {"dark":"#003a8c","light":"#74ACDF"},
+        "🇫🇷 France":      {"dark":"#001f8a","light":"#4d7fff"},
+        "🇩🇪 Germany":     {"dark":"#111111","light":"#DDDDDD"},
+        "🇪🇸 Spain":       {"dark":"#8B0000","light":"#CC0000"},
+        "🇮🇹 Italy":       {"dark":"#003da5","light":"#009246"},
+        "🇵🇹 Portugal":    {"dark":"#006600","light":"#FF2200"},
+        "🇳🇱 Netherlands": {"dark":"#8B3A00","light":"#FF6600"},
+    }
+    _sc_cnames = list(_SC_COUNTRIES.keys())
     _sc_names = list(_SC_PLAYERS.keys())
     if "sc_p1" not in st.session_state: st.session_state.sc_p1 = "El Maestro"
     if "sc_ai" not in st.session_state: st.session_state.sc_ai = "El Toro"
-    st.markdown("### ⚽ YAANA KICK — PICK YOUR PLAYER")
-    st.markdown('<div style="font-family:Bangers,sans-serif;font-size:13px;letter-spacing:3px;color:#40c4ff;margin-bottom:6px;">TOP 10 WORLD PLAYERS</div>',unsafe_allow_html=True)
+    if "sc_p1_country" not in st.session_state: st.session_state.sc_p1_country = "🇧🇷 Brazil"
+    if "sc_p2_country" not in st.session_state: st.session_state.sc_p2_country = "🇦🇷 Argentina"
+    sc_mode = st.session_state.get("sc_mode","ai")
+    p2_label = "🟥 PLAYER 2" if sc_mode=="2p" else "🟥 AI OPPONENT"
+    st.markdown(f"### ⚽ YAANA KICK — {'2P LOCAL MATCH' if sc_mode=='2p' else 'VS AI CHALLENGE'}")
+    # Country selection
+    st.markdown('<div style="font-family:Bangers,sans-serif;font-size:14px;letter-spacing:3px;color:#FFD100;margin-bottom:6px;">CHOOSE YOUR NATION</div>',unsafe_allow_html=True)
+    cc1,cc2=st.columns(2)
+    for cside,ckey,clabel,csel_col,cbdr in [
+        (cc1,"sc_p1_country","🟦 P1 NATION","#1565c0","#4da6ff"),
+        (cc2,"sc_p2_country",f"{p2_label} NATION","#b71c1c","#ff5252"),
+    ]:
+        with cside:
+            st.markdown(f'<div style="font-family:Bangers,sans-serif;font-size:13px;letter-spacing:2px;color:{cbdr};margin-bottom:4px;">{clabel}</div>',unsafe_allow_html=True)
+            crow1=st.columns(4)
+            crow2=st.columns(4)
+            for ci,(ccol,cname) in enumerate(zip(list(crow1)+list(crow2),_sc_cnames)):
+                cd=_SC_COUNTRIES[cname]
+                sel=st.session_state[ckey]==cname
+                bg=f"background:linear-gradient(135deg,{cd['dark']},{cd['light']}44);" if sel else "background:rgba(5,10,40,.9);"
+                bdr=f"border:2px solid {cd['light']};" if sel else "border:2px solid rgba(255,255,255,.1);"
+                with ccol:
+                    flag_part=cname.split(' ')[0]
+                    name_part=' '.join(cname.split(' ')[1:])
+                    st.markdown(f"""<div style="{bg}{bdr}border-radius:8px;padding:5px 2px;text-align:center;">
+<div style="font-size:18px;">{flag_part}</div>
+<div style="font-family:Bangers,sans-serif;font-size:8px;color:{'#fff' if sel else '#aaa'};letter-spacing:1px;">{name_part.upper()}</div>
+</div>""",unsafe_allow_html=True)
+                    if st.button("✓" if sel else "Pick",key=f"{ckey}_{ci}",use_container_width=True):
+                        st.session_state[ckey]=cname; st.rerun()
+    st.markdown("---")
+    st.markdown('<div style="font-family:Bangers,sans-serif;font-size:14px;letter-spacing:3px;color:#40c4ff;margin-bottom:6px;">CHOOSE YOUR PLAYER</div>',unsafe_allow_html=True)
     lc,rc=st.columns(2)
     for side_col,side_key,side_label,sel_col,bdr_sel in [
         (lc,"sc_p1","🟦 YOUR PLAYER","#1565c0","#4da6ff"),
-        (rc,"sc_ai","🟥 AI OPPONENT","#b71c1c","#ff5252"),
+        (rc,"sc_ai",p2_label,"#b71c1c","#ff5252"),
     ]:
         with side_col:
             st.markdown(f'<div style="font-family:Bangers,sans-serif;font-size:16px;letter-spacing:2px;color:{bdr_sel};margin-bottom:8px;">{side_label}</div>',unsafe_allow_html=True)
@@ -2349,7 +2506,12 @@ elif st.session_state.game_mode=="lobby_soccer":
             st.session_state["soccer_ai"]=st.session_state.sc_ai
             st.session_state["soccer_p1d"]=p1d
             st.session_state["soccer_aid"]=aid
-            st.session_state.game_mode="soccer_game"; st.rerun()
+            p1c=_SC_COUNTRIES[st.session_state.sc_p1_country]
+            p2c=_SC_COUNTRIES[st.session_state.sc_p2_country]
+            st.session_state["sc_p1_col"]=p1c
+            st.session_state["sc_p2_col"]=p2c
+            tgt="soccer_game_2p" if st.session_state.get("sc_mode","ai")=="2p" else "soccer_game"
+            st.session_state.game_mode=tgt; st.rerun()
         if st.button("🏠 MENU",key="sc_back"): full_reset(); st.rerun()
 
 elif st.session_state.game_mode=="soccer_game":
@@ -2357,6 +2519,54 @@ elif st.session_state.game_mode=="soccer_game":
     ain=st.session_state.get("soccer_ai","El Toro")
     p1d=st.session_state.get("soccer_p1d",{"jersey":"8","speed":5.3,"kick":13.5})
     aid=st.session_state.get("soccer_aid",{"jersey":"9","speed":4.9,"kick":15.5})
+    p1c=st.session_state.get("sc_p1_col",{"dark":"#0d3a7a","light":"#2196F3"})
+    p2c=st.session_state.get("sc_p2_col",{"dark":"#7a0d0d","light":"#f44336"})
+    _AI_AGENTS_INIT = "const fwd ={x:PCX+50,  y:PCY-PH*.28,vx:0,vy:0,walk:0,hasBall:false,team:'red',   cd:0, ptX:PCX,ptY:PCY-PH*.24,ptT:0};\nconst mid ={x:PCX-50,  y:PCY-PH*.06,vx:0,vy:0,walk:0,hasBall:false,team:'red',   cd:0};\nconst gk  ={x:PCX,     y:PB-30,              walk:0,hasBall:false,team:'orange',cd:0};"
+    _AI_AGENTS_UPDATE = """// AI Forward — chases ball aggressively when in upper half; patrols attack zone otherwise
+  fwd.ptT++;
+  let ballInFwdZone=ball.y<PCY+PH*.18;
+  let fTX=ballInFwdZone||dst(fwd,ball)<90?ball.x:fwd.ptX;
+  let fTY=ballInFwdZone||dst(fwd,ball)<90?ball.y:fwd.ptY;
+  if(fwd.ptT>95){fwd.ptT=0;fwd.ptX=PCX+(Math.random()-.5)*PW*.5;fwd.ptY=PCY-PH*.24+(Math.random()-.5)*PH*.1;}
+  let fD=Math.hypot(fTX-fwd.x,fTY-fwd.y)||1;
+  if(fD>2){fwd.x=clamp(fwd.x+(fTX-fwd.x)/fD*AISPD,PX+14,PR-14);fwd.y=clamp(fwd.y+(fTY-fwd.y)/fD*AISPD,PY+14,PB-14);fwd.walk+=.2;}
+  if(fwd.cd>0){fwd.cd--;}
+  else if(dst(fwd,ball)<POSS+ball.r){
+    let tx=PCX+(Math.random()-.5)*GW*.6,ty=PB+GD/2;
+    let kl=Math.hypot(tx-fwd.x,ty-fwd.y)||1;
+    ball.vx=(tx-fwd.x)/kl*AIKICK+(Math.random()-.5)*2.2;
+    ball.vy=(ty-fwd.y)/kl*AIKICK+(Math.random()-.5)*2.2;SFX.kick();fwd.cd=55;
+  }
+  let mTX,mTY;
+  if(ball.y>PCY){mTX=clamp(ball.x,PCX-PW*.28,PCX+PW*.28);mTY=PCY+PH*.06;}
+  else if(dst(mid,ball)<95){mTX=ball.x;mTY=ball.y;}
+  else{mTX=PCX+(ball.x-PCX)*.35;mTY=PCY-PH*.04;}
+  let mD=Math.hypot(mTX-mid.x,mTY-mid.y)||1;
+  if(mD>2){mid.x=clamp(mid.x+(mTX-mid.x)/mD*AISPD*.82,PX+14,PR-14);mid.y=clamp(mid.y+(mTY-mid.y)/mD*AISPD*.82,PY+14,PB-14);mid.walk+=.17;}
+  if(mid.cd>0){mid.cd--;}
+  else if(dst(mid,ball)<POSS+ball.r){
+    let tx=PCX+(Math.random()-.5)*GW*.65,ty=PB+GD/2;
+    let kl=Math.hypot(tx-mid.x,ty-mid.y)||1;
+    ball.vx=(tx-mid.x)/kl*AIKICK*.88+(Math.random()-.5)*2.2;
+    ball.vy=(ty-mid.y)/kl*AIKICK*.88+(Math.random()-.5)*2.2;mid.cd=50;
+  }
+  separate(fwd,mid,42);
+  let gkTX=clamp(ball.x,PCX-GW/2+12,PCX+GW/2-12);
+  let gkTY=ball.y>PB-PH*.20?PB-44:PB-28;
+  gk.x+=(gkTX-gk.x)*.09;gk.y+=(gkTY-gk.y)*.06;
+  gk.x=clamp(gk.x,PCX-GW/2+12,PCX+GW/2-12);gk.y=clamp(gk.y,PB-PH*.22,PB-24);
+  gk.walk+=.12;
+  if(gk.cd>0){gk.cd--;}
+  else if(dst(gk,ball)<POSS+ball.r+6&&ball.y>PCY+PH*.22){
+    let tx=PCX+(Math.random()-.5)*PW*.38,ty=PCY+(Math.random()-.5)*PH*.2;
+    let kl=Math.hypot(tx-gk.x,ty-gk.y)||1;
+    ball.vx=(tx-gk.x)/kl*AIKICK*1.18+(Math.random()-.5)*2;
+    ball.vy=(ty-gk.y)/kl*AIKICK*1.18+(Math.random()-.5)*2;gk.cd=32;
+  }"""
+    _AI_POSSESS = "p1.hasBall=dst(p1,ball)<POSS+ball.r;\n  fwd.hasBall=dst(fwd,ball)<POSS+ball.r;\n  mid.hasBall=dst(mid,ball)<POSS+ball.r;\n  gk.hasBall=dst(gk,ball)<POSS+ball.r;"
+    _AI_RESET = "fwd.x=PCX+50;fwd.y=PCY-PH*.28;\n  mid.x=PCX-50;mid.y=PCY-PH*.06;\n  gk.x=PCX;gk.y=PB-30;"
+    _AI_DRAW_OBJS = "let objs=[{t:'p1',y:p1.y},{t:'fwd',y:fwd.y},{t:'mid',y:mid.y},{t:'gk',y:gk.y},{t:'ball',y:ball.y}];\n  objs.sort((a,b)=>a.y-b.y);\n  objs.forEach(o=>{\n    if(o.t==='ball')drawBall();\n    else if(o.t==='p1')drawPlayer(p1,P1JN);\n    else if(o.t==='fwd')drawPlayer(fwd,AIJN);\n    else if(o.t==='mid')drawPlayer(mid,AIJN);\n    else{gk.isGK=true;drawPlayer(gk,'GK');}\n  });"
+    _AI_P1_KEYS = "if(keys['KeyW']||keys['ArrowUp'])dy=-1;\n  if(keys['KeyS']||keys['ArrowDown'])dy=1;\n  if(keys['KeyA']||keys['ArrowLeft'])dx=-1;\n  if(keys['KeyD']||keys['ArrowRight'])dx=1;"
     html=(_SOCCER_HTML
         .replace("__SC_NAME__",p1n.replace('"',''))
         .replace("__SC_AI_NAME__",ain.replace('"',''))
@@ -2366,6 +2576,175 @@ elif st.session_state.game_mode=="soccer_game":
         .replace("__SC_AI_SPD__",str(round(aid["speed"],2)))
         .replace("__SC_P1KICK__",str(round(p1d["kick"],1)))
         .replace("__SC_AI_KICK__",str(round(aid["kick"],1)))
+        .replace("__SC_P1CDARK__",p1c["dark"])
+        .replace("__SC_P1CLIGHT__",p1c["light"])
+        .replace("__SC_P2CDARK__",p2c["dark"])
+        .replace("__SC_P2CLIGHT__",p2c["light"])
+        .replace("__SC_AGENTS_INIT__",_AI_AGENTS_INIT)
+        .replace("__SC_P1_KEYS__",_AI_P1_KEYS)
+        .replace("__SC_AGENTS_UPDATE__",_AI_AGENTS_UPDATE)
+        .replace("__SC_POSSESS__",_AI_POSSESS)
+        .replace("__SC_RESET_POS__",_AI_RESET)
+        .replace("__SC_DRAW_OBJS__",_AI_DRAW_OBJS)
+        .replace("__SC_HUD_HINT__","WASD · SPACE Kick · SHIFT Sprint · R Replay")
     )
     components.html(html,height=590)
     if st.button("🏠 BACK TO MENU",key="sc_quit"): full_reset(); st.rerun()
+
+elif st.session_state.game_mode=="soccer_game_2p":
+    p1n=st.session_state.get("soccer_p1","El Maestro")
+    ain=st.session_state.get("soccer_ai","El Toro")
+    p1d=st.session_state.get("soccer_p1d",{"jersey":"8","speed":5.3,"kick":13.5})
+    aid=st.session_state.get("soccer_aid",{"jersey":"9","speed":4.9,"kick":15.5})
+    p1c=st.session_state.get("sc_p1_col",{"dark":"#0d3a7a","light":"#2196F3"})
+    p2c=st.session_state.get("sc_p2_col",{"dark":"#7a0d0d","light":"#f44336"})
+    _2P_AGENTS_INIT = "const p2={x:PCX,y:PCY-PH*.28,vx:0,vy:0,walk:0,hasBall:false,team:'red',cd:0,name:'__SC_AI_NAME2P__'};\nconst P2SPD=__SC_AI_SPD2P__,P2KICK=__SC_AI_KICK2P__;"
+    _2P_P1_KEYS = "if(keys['KeyW'])dy=-1;\n  if(keys['KeyS'])dy=1;\n  if(keys['KeyA'])dx=-1;\n  if(keys['KeyD'])dx=1;"
+    _2P_UPDATE = """let dx2=0,dy2=0;
+  if(keys['ArrowLeft'])dx2=-1;if(keys['ArrowRight'])dx2=1;
+  if(keys['ArrowUp'])dy2=-1;if(keys['ArrowDown'])dy2=1;
+  let sp2=(keys['ShiftRight']||keys['ControlRight'])?1.55:1;
+  if(dx2||dy2){
+    let l2=Math.hypot(dx2,dy2)||1;
+    p2.x=clamp(p2.x+dx2/l2*P2SPD*sp2,PX+14,PR-14);
+    p2.y=clamp(p2.y+dy2/l2*P2SPD*sp2,PY+14,PB-14);
+    p2.walk+=.22*sp2;
+    if(p2.hasBall){ball.x=lerp(ball.x,p2.x+dx2/l2*22,.3);ball.y=lerp(ball.y,p2.y+dy2/l2*22,.3);ball.vx=0;ball.vy=0;}
+  } else p2.walk+=.04;
+  if(keys['Enter']&&p2.cd<=0&&dst(p2,ball)<POSS+ball.r+8){
+    let tx=PCX+(Math.random()-.5)*GW*.5,ty=PB+GD/2;
+    let kl=Math.hypot(tx-p2.x,ty-p2.y)||1;
+    ball.vx=(tx-p2.x)/kl*P2KICK+(Math.random()-.5)*1.8;
+    ball.vy=(ty-p2.y)/kl*P2KICK+(Math.random()-.5)*1.8;
+    p2.hasBall=false;p2.cd=20;SFX.kick();
+    hitFX.push({x:ball.x,y:ball.y,l:22,ml:22,txt:'KICK!'});
+  }
+  if(p2.cd>0)p2.cd--;"""
+    _2P_POSSESS = "p1.hasBall=dst(p1,ball)<POSS+ball.r;\n  p2.hasBall=dst(p2,ball)<POSS+ball.r;\n  if(p1.hasBall&&!p1.cd)p2.hasBall=false;\n  if(p2.hasBall&&!p2.cd)p1.hasBall=false;"
+    _2P_RESET = "p2.x=PCX;p2.y=PCY-PH*.28;"
+    _2P_DRAW_OBJS = "let objs=[{t:'p1',y:p1.y},{t:'p2',y:p2.y},{t:'ball',y:ball.y}];\n  objs.sort((a,b)=>a.y-b.y);\n  objs.forEach(o=>{\n    if(o.t==='ball')drawBall();\n    else if(o.t==='p1')drawPlayer(p1,P1JN);\n    else drawPlayer(p2,AIJN);\n  });"
+    html=(_SOCCER_HTML
+        .replace("__SC_NAME__",p1n.replace('"',''))
+        .replace("__SC_AI_NAME__",ain.replace('"',''))
+        .replace("__SC_P1JN__",str(p1d["jersey"]))
+        .replace("__SC_AI_JN__",str(aid["jersey"]))
+        .replace("__SC_P1SPD__",str(round(p1d["speed"],2)))
+        .replace("__SC_AI_SPD__",str(round(aid["speed"],2)))
+        .replace("__SC_P1KICK__",str(round(p1d["kick"],1)))
+        .replace("__SC_AI_KICK__",str(round(aid["kick"],1)))
+        .replace("__SC_P1CDARK__",p1c["dark"])
+        .replace("__SC_P1CLIGHT__",p1c["light"])
+        .replace("__SC_P2CDARK__",p2c["dark"])
+        .replace("__SC_P2CLIGHT__",p2c["light"])
+        .replace("__SC_AGENTS_INIT__",
+            _2P_AGENTS_INIT
+            .replace("__SC_AI_NAME2P__",ain.replace('"',''))
+            .replace("__SC_AI_SPD2P__",str(round(aid["speed"],2)))
+            .replace("__SC_AI_KICK2P__",str(round(aid["kick"],1)))
+        )
+        .replace("__SC_P1_KEYS__",_2P_P1_KEYS)
+        .replace("__SC_AGENTS_UPDATE__",_2P_UPDATE)
+        .replace("__SC_POSSESS__",_2P_POSSESS)
+        .replace("__SC_RESET_POS__",_2P_RESET)
+        .replace("__SC_DRAW_OBJS__",_2P_DRAW_OBJS)
+        .replace("__SC_HUD_HINT__","P1: WASD+SPACE  |  P2: Arrows+ENTER  ·  R Replay")
+    )
+    components.html(html,height=590)
+    if st.button("🏠 BACK TO MENU",key="sc2p_quit"): full_reset(); st.rerun()
+
+# ── CAPTURE THE FLAG ─────────────────────────────────────────────────────────
+elif st.session_state.game_mode=="lobby_ctf_menu":
+    st.markdown("### 🚩 CAPTURE THE FLAG — CHOOSE MODE")
+    c1,c2=st.columns(2,gap="large")
+    with c1:
+        st.markdown("""<div style="background:linear-gradient(135deg,rgba(6,40,100,.95),rgba(4,25,70,.98));border:2px solid rgba(64,150,255,.5);border-radius:14px;padding:28px 20px;text-align:center;min-height:160px;">
+<div style="font-size:48px;margin-bottom:10px;">🤖</div>
+<div style="font-family:'Bangers',sans-serif;font-size:22px;letter-spacing:3px;color:#4da6ff;margin-bottom:8px;">VS AI</div>
+<div style="font-size:11px;color:rgba(160,200,255,.7);">Steal the enemy flag.<br>First to 3 captures wins!</div>
+</div>""",unsafe_allow_html=True)
+        if st.button("▶  PLAY vs AI",key="ctf_mode_ai",use_container_width=True,type="primary"):
+            st.session_state["ctf_mode"]="ai"; st.session_state.game_mode="lobby_ctf"; st.rerun()
+    with c2:
+        st.markdown("""<div style="background:linear-gradient(135deg,rgba(60,10,80,.95),rgba(40,5,60,.98));border:2px solid rgba(200,100,255,.5);border-radius:14px;padding:28px 20px;text-align:center;min-height:160px;">
+<div style="font-size:48px;margin-bottom:10px;">👥</div>
+<div style="font-family:'Bangers',sans-serif;font-size:22px;letter-spacing:3px;color:#cc77ff;margin-bottom:8px;">2P LOCAL</div>
+<div style="font-size:11px;color:rgba(200,160,255,.7);">Two players, one screen.<br>P1: WASD  |  P2: Arrow Keys</div>
+</div>""",unsafe_allow_html=True)
+        if st.button("▶  2P LOCAL",key="ctf_mode_2p",use_container_width=True):
+            st.session_state["ctf_mode"]="2p"; st.session_state.game_mode="lobby_ctf"; st.rerun()
+    if st.button("🏠 MENU",key="ctf_menu_back"): full_reset(); st.rerun()
+
+elif st.session_state.game_mode=="lobby_ctf":
+    ctf_mode=st.session_state.get("ctf_mode","ai")
+    st.markdown(f"### 🚩 CAPTURE THE FLAG — {'2P LOCAL' if ctf_mode=='2p' else 'VS AI'}")
+    if "ctf_p1_name" not in st.session_state: st.session_state.ctf_p1_name="Blue Squad"
+    if "ctf_p2_name" not in st.session_state: st.session_state.ctf_p2_name="Red Force"
+    _CTF_TEAMS=[
+        ("🔵","Blue Squad","#2196F3"),("🔷","Cobalt Unit","#1565c0"),
+        ("🟦","Navy Seals","#0d47a1"),("⚡","Storm Riders","#4dd0e1"),
+        ("🔴","Red Force","#f44336"),("🟥","Crimson Hawks","#b71c1c"),
+        ("🟧","Orange Tigers","#FF6D00"),("🔥","Fire Squad","#FF3D00"),
+    ]
+    p1_teams=_CTF_TEAMS[:4]; p2_teams=_CTF_TEAMS[4:]
+    lc,rc=st.columns(2)
+    for (side_col,skey,scol_key,slabel,teams,default_idx) in [
+        (lc,"ctf_p1_name","ctf_p1_col","🟦 TEAM 1 (WASD)",p1_teams,0),
+        (rc,"ctf_p2_name","ctf_p2_col","🟥 TEAM 2 (Arrows)" if ctf_mode=="2p" else "🟥 AI TEAM",p2_teams,4),
+    ]:
+        with side_col:
+            st.markdown(f'<div style="font-family:Bangers,sans-serif;font-size:15px;letter-spacing:2px;color:rgba(180,210,255,.8);margin-bottom:8px;">{slabel}</div>',unsafe_allow_html=True)
+            if scol_key not in st.session_state: st.session_state[scol_key]=teams[0][2]
+            for icon,name,col in teams:
+                sel=st.session_state[skey]==name
+                bg=f"background:linear-gradient(135deg,{col}44,{col}22);" if sel else "background:rgba(5,10,35,.9);"
+                bdr=f"border:2px solid {col};" if sel else "border:2px solid rgba(255,255,255,.1);"
+                st.markdown(f"""<div style="{bg}{bdr}border-radius:8px;padding:6px 10px;margin-bottom:4px;display:flex;align-items:center;gap:8px;">
+<span style="font-size:18px;">{icon}</span>
+<span style="font-family:Bangers,sans-serif;font-size:13px;letter-spacing:1px;color:{'#fff' if sel else '#aaa'};">{name.upper()}</span>
+</div>""",unsafe_allow_html=True)
+                if st.button("✓ Selected" if sel else f"Select {name}",key=f"{scol_key}_{name}",use_container_width=True):
+                    st.session_state[skey]=name; st.session_state[scol_key]=col; st.rerun()
+    st.markdown("---")
+    ca,cb,cc=st.columns([2,2,1])
+    with ca:
+        st.markdown(f"**Team 1:** {st.session_state.ctf_p1_name}\n\nControls: WASD to move")
+    with cb:
+        st.markdown(f"**{'Team 2' if ctf_mode=='2p' else 'AI Team'}:** {st.session_state.ctf_p2_name}\n\nControls: {'Arrow Keys' if ctf_mode=='2p' else 'AI controlled'}")
+    with cc:
+        st.markdown("**🚩 Rules**\nSteal enemy flag\nBring to YOUR base\nFirst to 3 wins!")
+        if st.button("🚩 PLAY!",type="primary",use_container_width=True,key="ctf_start"):
+            st.session_state.game_mode="ctf_game_2p" if ctf_mode=="2p" else "ctf_game"; st.rerun()
+        if st.button("🏠 MENU",key="ctf_back"): full_reset(); st.rerun()
+
+elif st.session_state.game_mode=="ctf_game":
+    p1n=st.session_state.get("ctf_p1_name","Blue Squad")
+    p2n=st.session_state.get("ctf_p2_name","Red Force")
+    p1c=st.session_state.get("ctf_p1_col","#2196F3")
+    p2c=st.session_state.get("ctf_p2_col","#f44336")
+    html=(_CTF_HTML
+        .replace("__CTF_P1NAME__",p1n)
+        .replace("__CTF_P2NAME__",p2n)
+        .replace("__CTF_P1COL__",p1c)
+        .replace("__CTF_P2COL__",p2c)
+        .replace("__CTF_P2_UPDATE__","aiUpdate();")
+        .replace("__CTF_CONTROLS_HINT__","WASD Move · R Restart")
+    )
+    components.html(html,height=540)
+    if st.button("🏠 BACK TO MENU",key="ctf_quit"): full_reset(); st.rerun()
+
+elif st.session_state.game_mode=="ctf_game_2p":
+    p1n=st.session_state.get("ctf_p1_name","Blue Squad")
+    p2n=st.session_state.get("ctf_p2_name","Red Force")
+    p1c=st.session_state.get("ctf_p1_col","#2196F3")
+    p2c=st.session_state.get("ctf_p2_col","#f44336")
+    _2p_upd="let dx2=0,dy2=0;\n  if(keys['ArrowLeft'])dx2=-1;if(keys['ArrowRight'])dx2=1;if(keys['ArrowUp'])dy2=-1;if(keys['ArrowDown'])dy2=1;\n  move(p2,dx2,dy2,SPEED);"
+    html=(_CTF_HTML
+        .replace("__CTF_P1NAME__",p1n)
+        .replace("__CTF_P2NAME__",p2n)
+        .replace("__CTF_P1COL__",p1c)
+        .replace("__CTF_P2COL__",p2c)
+        .replace("__CTF_P2_UPDATE__",_2p_upd)
+        .replace("__CTF_CONTROLS_HINT__","P1: WASD · P2: Arrow Keys · R Restart")
+    )
+    components.html(html,height=540)
+    if st.button("🏠 BACK TO MENU",key="ctf2p_quit"): full_reset(); st.rerun()
