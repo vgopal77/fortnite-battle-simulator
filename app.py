@@ -1124,8 +1124,8 @@ function update(){
   });
   // Loot collection
   loot.forEach(lt=>{if(!lt.collected&&Math.hypot(p.x-lt.x,p.y-lt.y)<22){lt.collected=true;p.hp=Math.min(5,lt.type==='hp'?p.hp+1:p.hp);for(let i=0;i<6;i++)particles.push({x:lt.x,y:lt.y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,r:4,c:lt.type==='hp'?'#00e676':'#40c4ff',l:20,ml:20});}});
-  // Storm hit
-  if(stormX>=p.x-22){p.hp--;stormSpd=Math.max(stormSpd,scrollSpd+0.3);for(let i=0;i<5;i++)particles.push({x:p.x,y:p.y-10,vx:(Math.random()-.5)*4,vy:-2,r:3,c:'#aa00ff',l:20,ml:20});if(p.hp<=0)gameOver=true;}
+  // Storm hit — gated to every 55 frames so player has time to escape
+  if(stormX>=p.x-22&&frame%55===0){p.hp--;stormSpd=Math.max(stormSpd,scrollSpd+0.3);for(let i=0;i<5;i++)particles.push({x:p.x,y:p.y-10,vx:(Math.random()-.5)*4,vy:-2,r:3,c:'#aa00ff',l:20,ml:20});if(p.hp<=0)gameOver=true;}
   obstacles=obstacles.filter(o=>o.x+150>0);loot=loot.filter(l=>!l.collected&&l.x>-30);
   particles.forEach(pt=>{pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=0.3;pt.l--;});particles=particles.filter(pt=>pt.l>0);
   if(score>best)best=score;
@@ -1279,10 +1279,11 @@ function draw(){
   // Game over
   if(gameOver){
     cx.fillStyle='rgba(0,0,0,0.84)';cx.fillRect(0,0,W,H);cx.textAlign='center';
-    cx.fillStyle='#FFD100';cx.shadowColor='#FFD100';cx.shadowBlur=22;cx.font='bold 50px Bangers,sans-serif';cx.fillText('⏱️ TIME UP!',W/2,H/2-48);cx.shadowBlur=0;
+    if(PNAME){cx.fillStyle='rgba(255,255,255,.45)';cx.font='13px Rajdhani,sans-serif';cx.fillText(PNAME.toUpperCase(),W/2,H/2-72);}
+    cx.fillStyle='#FFD100';cx.shadowColor='#FFD100';cx.shadowBlur=22;cx.font='bold 50px Bangers,sans-serif';cx.fillText('⏱️ TIME UP!',W/2,H/2-46);cx.shadowBlur=0;
     cx.fillStyle='#fff';cx.font='22px Bangers,sans-serif';cx.fillText('FINAL SCORE: '+score,W/2,H/2);
     cx.font='15px Rajdhani,sans-serif';cx.fillStyle='#aabbdd';
-    cx.fillText('Accuracy: '+Math.round(hits/(shots||1)*100)+'%  ·  Targets hit: '+hits+'  ·  Misses: '+misses,W/2,H/2+30);
+    cx.fillText('Accuracy: '+Math.round(hits/(shots||1)*100)+'%  ·  Hits: '+hits+'  ·  Misses: '+misses,W/2,H/2+30);
     let rank=score<500?'TRAINEE':score<1500?'MARKSMAN':score<3000?'SHARPSHOOTER':score<5000?'SNIPER ELITE':'LEGENDARY AIM';
     cx.fillStyle='#FFD100';cx.font='bold 20px Bangers,sans-serif';cx.fillText('🏅 '+rank,W/2,H/2+60);cx.textAlign='left';
   }
@@ -1685,7 +1686,7 @@ function draw(){
     cx.font='bold 70px Bangers,sans-serif';cx.fillText('GOAL!',W/2,H*.42);cx.shadowBlur=0;
     cx.fillStyle='#fff';cx.font='bold 22px Rajdhani,sans-serif';
     cx.fillText((goalTeam==='p'?p1.name.toUpperCase():AINAME.toUpperCase())+' SCORES!'+(goalTeam==='p'?' 🎉':' 🤖'),W/2,H*.55);
-    cx.textAlign='left';if(goalTimer<=0)phase=timer>0?'play':'end';
+    cx.textAlign='left';if(goalTimer<=0){if(timer<=0)phase='end';/* else setTimeout in resetKickoff handles play */}
   }
   if(phase==='end'){
     cx.fillStyle='rgba(0,0,18,.90)';cx.fillRect(0,0,W,H);
@@ -1720,7 +1721,7 @@ def do_fire_online(room_code, atk_role):
     def_n=r["p2_name"] if is_p1 else r["p1_name"]
     wpn_idx=r["p1_wpn"] if is_p1 else r["p2_wpn"]
     wpn_key=(r["p1_w1"] if wpn_idx==0 else r["p1_w2"]) if is_p1 else (r["p2_w1"] if wpn_idx==0 else r["p2_w2"])
-    atk_col_key,def_col_key="p1_col","p2_col" if is_p1 else ("p2_col","p1_col")
+    atk_col_key,def_col_key=("p1_col","p2_col") if is_p1 else ("p2_col","p1_col")
     def_hp_key,def_sh_key=("p2_hp","p2_sh") if is_p1 else ("p1_hp","p1_sh")
     atk_hp_key=("p1_hp") if is_p1 else ("p2_hp")
     def_cov=r["p2_cover"] if is_p1 else r["p1_cover"]
@@ -1736,8 +1737,6 @@ def do_fire_online(room_code, atk_role):
         patch_room(room_code,log=log,phase="p2_move" if is_p1 else "p1_move"); return
     atk_col=r[atk_col_key]; def_col=r[def_col_key]
     dist=abs(atk_col-def_col)
-    if is_p1: atk_col_key,def_col_key="p1_col","p2_col"
-    else:      atk_col_key,def_col_key="p2_col","p1_col"
     damage=int(w["damage"]*get_rng(wpn_key,dist)); label="Hit"; etype="hit"
     if atk_skin=="Midas" and random.random()<atk.get("gold_chance",0):
         damage=int(damage*2); label="👑 GOLDEN TOUCH 2×"; etype="crit"
@@ -1775,10 +1774,14 @@ def do_fire_online(room_code, atk_role):
                     log.insert(0,("miss",f"⚡ <b>{name}</b> takes {dmg} STORM DAMAGE! ({col} outside safe {smin}-{smax})"))
                     return nh2,ns2
                 return hp,sh
-            p1h,p1s=apply_storm(r["p1_hp"],r["p1_sh"],r["p1_col"],r["p1_name"])
-            p2h,p2s=apply_storm(nh if not is_p1 else r["p2_hp"],ns if not is_p1 else r["p2_sh"],r["p2_col"],r["p2_name"])
-            if is_p1: p2h,p2s=nh,ns
-            else: p2h=nh; p2s=ns
+            # When P2 attacked: nh,ns = P1's post-attack HP (P1 is defender)
+            # When P1 attacked: nh,ns = P2's post-attack HP (P2 is defender)
+            p1_cur_hp=r["p1_hp"] if is_p1 else nh
+            p1_cur_sh=r["p1_sh"] if is_p1 else ns
+            p2_cur_hp=nh if is_p1 else r["p2_hp"]
+            p2_cur_sh=ns if is_p1 else r["p2_sh"]
+            p1h,p1s=apply_storm(p1_cur_hp,p1_cur_sh,r["p1_col"],r["p1_name"])
+            p2h,p2s=apply_storm(p2_cur_hp,p2_cur_sh,r["p2_col"],r["p2_name"])
             # Check if storm killed anyone
             if p1h<=0 and r["phase"]!="done":
                 log.insert(0,("win",f"🏆 <b>{r['p2_name']}</b> WINS by storm! <b>{r['p1_name']}</b> eliminated!"))
